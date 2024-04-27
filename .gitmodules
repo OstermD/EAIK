@@ -1,0 +1,3 @@
+[submodule "external/ik-geo"]
+	path = external/ik-geo
+	url = git@github.com:OstermD/ik-geo.git

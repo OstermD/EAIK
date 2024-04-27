@@ -1,0 +1,8 @@
+# Binary files
+*.out
+
+# build files
+*build/
+
+# .vscode files
+*.vscode/
