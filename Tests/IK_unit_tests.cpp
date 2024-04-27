@@ -50,8 +50,8 @@ int main(int argc, char *argv[])
 	ik_test_PUMA();
 	ik_test_3P();
 
-	// Redundancy test creates warning output on std::out
-	//ik_test_SPHERICAL_2_3_P_REDUNDANT();
+	// Redundancy test my create warning output on std::out
+	ik_test_SPHERICAL_2_3_P_REDUNDANT();
 
 	return 0;
 }
