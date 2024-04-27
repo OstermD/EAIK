@@ -11,7 +11,7 @@ namespace EAIK
     class Robot
     {
     public:
-        Robot(const Eigen::MatrixXd &H, const Eigen::MatrixXd &P, bool is_double_precision);
+        Robot(const Eigen::MatrixXd &H, const Eigen::MatrixXd &P, bool is_double_precision=true);
         IKS::IK_Solution calculate_IK(const IKS::Homogeneous_T &ee_position_orientation) const;
         IKS::Homogeneous_T fwdkin(const std::vector<double> &Q) const;
         bool is_spherical() const;

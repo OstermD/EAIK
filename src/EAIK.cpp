@@ -29,7 +29,6 @@ namespace EAIK
         }
         else
         {
-            std::cout<<"non-spherical"<<std::endl;
             bot_kinematics = std::make_unique<IKS::General_Robot>(H, P_new);
         }
     }

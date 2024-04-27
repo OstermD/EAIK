@@ -19,6 +19,7 @@ const Eigen::Vector3d ez(0, 0, 1);
 bool ik_test_puma();
 bool ik_test_IRB6640();
 bool ik_test_spherical();
+bool ik_test_3P();
 
 bool evaluate_test(const std::string &name_test, const EAIK::Robot &robot, const std::vector<IKS::Homogeneous_T> &ee_poses);
 
@@ -39,7 +40,36 @@ int main(int argc, char *argv[])
 	ik_test_puma();
 	ik_test_IRB6640();
 	ik_test_spherical();
+	ik_test_3P();
 	return 0;
+}
+
+// Axis 2, 3, 4, parallel
+bool ik_test_3P()
+{
+	const Eigen::Vector3d zv(0, 0, 0);
+	const Eigen::Vector3d ex(1, 0, 0);
+	const Eigen::Vector3d ey(0, 1, 0);
+	const Eigen::Vector3d ez(0, 0, 1);
+
+	// Robot configuration for spherical wrist with second and third axis intersecting
+	Eigen::Matrix<double, 3, 6> three_parallel_H;
+	three_parallel_H << ez, ex, ex, ex, ez, ex;
+	Eigen::Matrix<double, 3, 7> three_parallel_P;
+	three_parallel_P << ez, ey, ey, ey, ey, ey + ex, ex;
+
+	EAIK::Robot three_parallel(three_parallel_H, three_parallel_P);
+
+	
+	std::vector<IKS::Homogeneous_T> ee_poses;
+	ee_poses.reserve(BATCH_SIZE);
+	for(unsigned i = 0; i < BATCH_SIZE; i++)
+	{
+		ee_poses.push_back(three_parallel.fwdkin({rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle()}));
+
+	}
+
+	return evaluate_test("IK three parallel - 2,3,4", three_parallel, ee_poses);
 }
 
 // spherical wrist, intersecting axes 1,2, parallel 2,3, intersecting 3,4
