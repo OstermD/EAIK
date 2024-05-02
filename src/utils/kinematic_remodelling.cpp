@@ -50,7 +50,7 @@ namespace EAIK
         // Remodel Robot "Base"
         for(unsigned i = 0; i < H.cols()-4; i++)
         {
-            p0_i_plus1 += P.col(i);
+            p0_i_plus1 += P_new.col(i);
             if (do_axis_intersect(H.col(i), H.col(i+1), P.col(i+1), ZERO_THRESHOLD, AXIS_INTERSECT_THRESHOLD))
             {
                 Eigen::Vector3d intersection = calc_intersection(H.col(i), H.col(i+1), p0_i_plus1, P.col(i+1), ZERO_THRESHOLD);
@@ -65,19 +65,19 @@ namespace EAIK
                     j++;
                     p0j += P.col(j);
                 }
-
-                P_new.col(i) = intersection - (p0_i_plus1-P.col(i));
+                P_new.col(i) = intersection - (p0_i_plus1-P_new.col(i));
                 P_new.col(j) = p0j - intersection;
                 i = j-1;
                 p0_i_plus1 = p0j - P.col(j);
             }
         }
+
         p0_i_plus1+=P.col(H.cols()-4);
 
         // Remodel Robot "Wrist"
         for(unsigned i = H.cols()-3; i < H.cols()-1; i++)
         {
-            p0_i_plus1 += P.col(i);
+            p0_i_plus1 += P_new.col(i);
             if (do_axis_intersect(H.col(i), H.col(i+1), P.col(i+1), ZERO_THRESHOLD, AXIS_INTERSECT_THRESHOLD))
             {
                 Eigen::Vector3d intersection = calc_intersection(H.col(i), H.col(i+1), p0_i_plus1, P.col(i+1), AXIS_INTERSECT_THRESHOLD);
@@ -93,7 +93,7 @@ namespace EAIK
                     j++;
                     p0j += P.col(j);
                 }
-                P_new.col(i) = intersection - (p0_i_plus1-P.col(i));
+                P_new.col(i) = intersection - (p0_i_plus1-P_new.col(i));
                 P_new.col(j) = p0j - intersection;
                 i = j-1;
                 p0_i_plus1 = p0j - P.col(j);
