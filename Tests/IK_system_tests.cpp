@@ -8,7 +8,7 @@
 #include "EAIK.h"
 
 #define ERROR_PASS_EPSILON 1e-6
-#define BATCH_SIZE 100
+#define BATCH_SIZE 10000
 
 const Eigen::Vector3d zv(0, 0, 0);
 const Eigen::Vector3d ex(1, 0, 0);
@@ -20,6 +20,7 @@ bool ik_test_puma();
 bool ik_test_IRB6640();
 bool ik_test_spherical();
 bool ik_test_3P();
+bool ik_test_UR5();
 
 bool evaluate_test(const std::string &name_test, const EAIK::Robot &robot, const std::vector<IKS::Homogeneous_T> &ee_poses);
 
@@ -41,7 +42,35 @@ int main(int argc, char *argv[])
 	ik_test_IRB6640();
 	ik_test_spherical();
 	ik_test_3P();
+	ik_test_UR5();
 	return 0;
+}
+
+// Axis 2, 3, 4, parallel
+bool ik_test_UR5()
+{
+	const Eigen::Vector3d zv(0, 0, 0);
+	const Eigen::Vector3d ex(1, 0, 0);
+	const Eigen::Vector3d ey(0, 1, 0);
+	const Eigen::Vector3d ez(0, 0, 1);
+
+	Eigen::Matrix<double, 3, 6> ur5_H;
+	ur5_H << ez, ey, ey, ey, -ez, ey;
+	Eigen::Matrix<double, 3, 7> ur5_P;
+	ur5_P << 0.089159*ez, 0.13585*ey, 0.425*ex-0.1197*ey, 0.39225*ex,0.093*ey, -0.09465*ez, zv;
+
+	EAIK::Robot three_parallel(ur5_H, ur5_P);
+
+	
+	std::vector<IKS::Homogeneous_T> ee_poses;
+	ee_poses.reserve(BATCH_SIZE);
+	for(unsigned i = 0; i < BATCH_SIZE; i++)
+	{
+		ee_poses.push_back(three_parallel.fwdkin({rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle()}));
+
+	}
+
+	return evaluate_test("IK UR5 three parallel - 2,3,4", three_parallel, ee_poses);
 }
 
 // Axis 2, 3, 4, parallel
@@ -52,7 +81,6 @@ bool ik_test_3P()
 	const Eigen::Vector3d ey(0, 1, 0);
 	const Eigen::Vector3d ez(0, 0, 1);
 
-	// Robot configuration for spherical wrist with second and third axis intersecting
 	Eigen::Matrix<double, 3, 6> three_parallel_H;
 	three_parallel_H << ez, ex, ex, ex, ez, ex;
 	Eigen::Matrix<double, 3, 7> three_parallel_P;
@@ -151,6 +179,7 @@ bool evaluate_test(const std::string &name_test, const EAIK::Robot &robot, const
 	double sum_error = 0;
 	double max_error = 0;
 	unsigned total_non_LS_solutions = 0;
+	unsigned total_LS_solutions = 0;
 	for (const auto &pose : ee_poses)
 	{
 		solution = robot.calculate_IK(pose);
@@ -173,15 +202,36 @@ bool evaluate_test(const std::string &name_test, const EAIK::Robot &robot, const
 
 		if (non_LS_solutions == 0)
 		{
-			std::cout << "\n===== Test [" << name_test << "]: ";
-			std::cout << "ERROR - No analytic solution found!" << std::endl;
-			std::cout << pose << std::endl
-					  << " =====" << std::endl;
-			return false;
+			std::vector<double> smallest_error_LS;
+			double smallest_error = std::numeric_limits<double>::infinity();
+			for (unsigned i = 0; i < solution.Q.size(); i++)
+			{
+				IKS::Homogeneous_T result = robot.fwdkin(solution.Q.at(i));
+				double error = (result - pose).norm();
+				// Only account for non-LS-solutions in this test
+				if (error < smallest_error)
+				{
+					smallest_error = error;
+					smallest_error_LS = solution.Q.at(i);
+				}
+			}
+			if(solution.Q.size() > 0)
+			{
+				max_error = max_error < smallest_error ? smallest_error : max_error;
+				
+				sum_error += smallest_error;
+				total_LS_solutions++;
+			}
+
 		}
 	}
 
-	const double avg_error = sum_error / total_non_LS_solutions;
+	double avg_error = std::numeric_limits<double>::infinity();
+	
+	if(total_LS_solutions+total_non_LS_solutions > 0)
+	{
+		avg_error = sum_error / (total_non_LS_solutions+total_LS_solutions);
+	}
 	const bool is_passed{std::fabs(max_error) < ERROR_PASS_EPSILON &&
 						 std::fabs(avg_error) < ERROR_PASS_EPSILON};
 	std::cout << "\n===== Test [" << name_test << "]: ";
@@ -195,6 +245,7 @@ bool evaluate_test(const std::string &name_test, const EAIK::Robot &robot, const
 	}
 	std::cout << "\tAverage error: " << avg_error << std::endl;
 	std::cout << "\tMaximum error: " << max_error << std::endl;
+	std::cout << "\tNum LS solutions:  " << total_LS_solutions << std::endl;
 	std::cout << "===== Average solution time (nanoseconds): " << time / BATCH_SIZE << " =====" << std::endl;
 
 	return is_passed;

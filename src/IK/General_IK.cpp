@@ -36,61 +36,118 @@ namespace IKS
                  this->H.col(2).cross(this->H.col(3)).norm() < ZERO_THRESH)
         {
             // h2 || h3 || h4
-            const double d1 = this->H.col(1).transpose() * (this->P.col(2) + this->P.col(3) + this->P.col(4) + this->P.col(1));
-            const double d2 = 0;
 
-            SP6 sp6(this->H.col(1),
-                    this->H.col(1),
-                    this->H.col(1),
-                    this->H.col(1),
-                    -this->H.col(0),
-                    this->H.col(4),
-                    -this->H.col(0),
-                    this->H.col(4),
-                    p_16,
-                    -this->P.col(5),
-                    r_06 * this->H.col(5),
-                    -this->H.col(5),
-                    d1,
-                    d2);
+            std::vector<double> theta_1;
+            std::vector<double> theta_5;
 
-            sp6.solve();
-            const std::vector<double> theta_1 = sp6.get_theta_1();
-            const std::vector<double> theta_5 = sp6.get_theta_2();
+            // (h5 x h6)(p56)==0) -> h5 intersects h6
+            if (std::fabs(this->H.col(4).cross(this->H.col(5)).transpose() * this->P.col(5)) < ZERO_THRESH)
+            { 
+                const Eigen::Vector3d p15 = this->P.col(1)+this->P.col(2)+this->P.col(3)+this->P.col(4);
+                SP4 sp4_q1(this->H.col(1), p_16, -this->H.col(0), this->H.col(1).transpose()*p15);
+                sp4_q1.solve();
+                theta_1 = sp4_q1.get_theta();
 
-            for(unsigned i = 0; i < theta_1.size(); i++)
+                for(unsigned i = 0; i < theta_1.size(); i++)
+                {
+                    const double& q1 = theta_1.at(i);
+                    const Eigen::Matrix3d r_01 = Eigen::AngleAxisd(q1, this->H.col(0).normalized()).toRotationMatrix();
+
+                    SP4 sp4_q5(this->H.col(1), this->H.col(5), this->H.col(4), this->H.col(1).transpose()*(r_01.transpose())*r_06*this->H.col(5));
+                    sp4_q5.solve();
+
+                    for(double q5 : sp4_q5.get_theta())
+                    {
+                        const Eigen::Matrix3d r_01 = Eigen::AngleAxisd(q1, this->H.col(0).normalized()).toRotationMatrix();
+                        const Eigen::Matrix3d r_45 = Eigen::AngleAxisd(q5, this->H.col(4).normalized()).toRotationMatrix();
+
+                        SP1 sp_14(r_45*this->H.col(5), r_01.transpose()*r_06*this->H.col(5), this->H.col(1));
+                        SP1 sp_q6(r_45.transpose()*this->H.col(1), r_06.transpose()*r_01*this->H.col(1), -this->H.col(5));
+                        sp_14.solve();
+
+                        const Eigen::Matrix3d r_14 = Eigen::AngleAxisd(sp_14.get_theta(), this->H.col(1).normalized()).toRotationMatrix();
+                        const Eigen::Vector3d d_inner = r_01.transpose()*p_16-this->P.col(1) - r_14*r_45*this->P.col(5) - r_14*this->P.col(4);
+                        const double d = d_inner.norm();
+
+                        SP3 sp3_t3(-this->P.col(3), this->P.col(2), this->H.col(1), d);
+                        sp3_t3.solve();
+                        sp_q6.solve();
+
+                        const std::vector<double> theta_3 = sp3_t3.get_theta();
+
+                        for(const auto& q3 : theta_3)
+                        {                
+                            const Eigen::Matrix3d rot_1 = Eigen::AngleAxisd(q3, this->H.col(1).normalized()).toRotationMatrix();
+                            SP1 sp1_q2(this->P.col(2)+rot_1*this->P.col(3), d_inner, this->H.col(1));
+                            sp1_q2.solve();
+
+                            double q4 = sp_14.get_theta() - sp1_q2.get_theta() - q3;
+                            q4 = std::atan2(std::sin(q4), std::cos(q4)); // Map angle q4 to [-PI,PI)
+
+                            solution.Q.push_back({q1, sp1_q2.get_theta(), q3, q4, q5, sp_q6.get_theta()});
+                            solution.is_LS_vec.push_back(sp4_q1.solution_is_ls() || sp1_q2.solution_is_ls() || sp3_t3.solution_is_ls() ||sp4_q5.solution_is_ls()|| sp_q6.solution_is_ls());
+                        }
+                    }
+                }
+            }
+            else
             {
-                const double& q1 = theta_1.at(i);
-                const double& q5 = theta_5.at(i);
+                const double d1 = this->H.col(1).transpose() * (this->P.col(2) + this->P.col(3) + this->P.col(4) + this->P.col(1));
+                const double d2 = 0;
 
-                const Eigen::Matrix3d r_01 = Eigen::AngleAxisd(q1, this->H.col(0).normalized()).toRotationMatrix();
-                const Eigen::Matrix3d r_45 = Eigen::AngleAxisd(q5, this->H.col(4).normalized()).toRotationMatrix();
+                SP6 sp6(this->H.col(1),
+                        this->H.col(1),
+                        this->H.col(1),
+                        this->H.col(1),
+                        -this->H.col(0),
+                        this->H.col(4),
+                        -this->H.col(0),
+                        this->H.col(4),
+                        p_16,
+                        -this->P.col(5),
+                        r_06 * this->H.col(5),
+                        -this->H.col(5),
+                        d1,
+                        d2);
 
-                SP1 sp_14(r_45*this->H.col(5), r_01.transpose()*r_06*this->H.col(5), this->H.col(1));
-                SP1 sp_q6(r_45.transpose()*this->H.col(1), r_06.transpose()*r_01*this->H.col(1), -this->H.col(5));
-                sp_14.solve();
+                sp6.solve();
+                theta_1 = sp6.get_theta_1();
+                theta_5 = sp6.get_theta_2();
 
-                const Eigen::Matrix3d r_14 = Eigen::AngleAxisd(sp_14.get_theta(), this->H.col(1).normalized()).toRotationMatrix();
-                const Eigen::Vector3d d_inner = r_01.transpose()*p_16-this->P.col(1) - r_14*r_45*this->P.col(5) - r_14*this->P.col(4);
-                const double d = d_inner.norm();
+                for(unsigned i = 0; i < theta_1.size(); i++)
+                {
+                    const double& q1 = theta_1.at(i);
+                    const double& q5 = theta_5.at(i);
 
-                SP3 sp3_t3(-this->P.col(3), this->P.col(2), this->H.col(1), d);
-                sp3_t3.solve();
-                sp_q6.solve();
+                    const Eigen::Matrix3d r_01 = Eigen::AngleAxisd(q1, this->H.col(0).normalized()).toRotationMatrix();
+                    const Eigen::Matrix3d r_45 = Eigen::AngleAxisd(q5, this->H.col(4).normalized()).toRotationMatrix();
 
-                const std::vector<double> theta_3 = sp3_t3.get_theta();
+                    SP1 sp_14(r_45*this->H.col(5), r_01.transpose()*r_06*this->H.col(5), this->H.col(1));
+                    SP1 sp_q6(r_45.transpose()*this->H.col(1), r_06.transpose()*r_01*this->H.col(1), -this->H.col(5));
+                    sp_14.solve();
 
-                for(const auto& q3 : theta_3)
-                {                
-                    const Eigen::Matrix3d rot_1 = Eigen::AngleAxisd(q3, this->H.col(1).normalized()).toRotationMatrix();
-                    SP1 sp1_q2(this->P.col(2)+rot_1*this->P.col(3), d_inner, this->H.col(1));
-                    sp1_q2.solve();
+                    const Eigen::Matrix3d r_14 = Eigen::AngleAxisd(sp_14.get_theta(), this->H.col(1).normalized()).toRotationMatrix();
+                    const Eigen::Vector3d d_inner = r_01.transpose()*p_16-this->P.col(1) - r_14*r_45*this->P.col(5) - r_14*this->P.col(4);
+                    const double d = d_inner.norm();
 
-                    double q4 = sp_14.get_theta() - sp1_q2.get_theta() - q3;
-                    q4 = std::atan2(std::sin(q4), std::cos(q4)); // Map angle q4 to [-PI,PI)
+                    SP3 sp3_t3(-this->P.col(3), this->P.col(2), this->H.col(1), d);
+                    sp3_t3.solve();
+                    sp_q6.solve();
 
-                    solution.Q.push_back({q1, sp1_q2.get_theta(), q3, q4, q5, sp_q6.get_theta()});
-                    solution.is_LS_vec.push_back(sp6.solution_is_ls() || sp1_q2.solution_is_ls() || sp3_t3.solution_is_ls() || sp_q6.solution_is_ls());
+                    const std::vector<double> theta_3 = sp3_t3.get_theta();
+
+                    for(const auto& q3 : theta_3)
+                    {                
+                        const Eigen::Matrix3d rot_1 = Eigen::AngleAxisd(q3, this->H.col(1).normalized()).toRotationMatrix();
+                        SP1 sp1_q2(this->P.col(2)+rot_1*this->P.col(3), d_inner, this->H.col(1));
+                        sp1_q2.solve();
+
+                        double q4 = sp_14.get_theta() - sp1_q2.get_theta() - q3;
+                        q4 = std::atan2(std::sin(q4), std::cos(q4)); // Map angle q4 to [-PI,PI)
+
+                        solution.Q.push_back({q1, sp1_q2.get_theta(), q3, q4, q5, sp_q6.get_theta()});
+                        solution.is_LS_vec.push_back(sp6.solution_is_ls() || sp1_q2.solution_is_ls() || sp3_t3.solution_is_ls() ||sp_q6.solution_is_ls());
+                    }
                 }
             }
         }

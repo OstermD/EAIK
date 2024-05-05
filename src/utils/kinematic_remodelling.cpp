@@ -95,8 +95,8 @@ namespace EAIK
                 }
                 P_new.col(i) = intersection - (p0_i_plus1-P_new.col(i));
                 P_new.col(j) = p0j - intersection;
-                i = j-1;
-                p0_i_plus1 = p0j - P.col(j);
+                i = j-2;
+                p0_i_plus1 = p0j - P.col(j)-P.col(j-1);
             }
         }
         return P_new;
