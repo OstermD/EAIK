@@ -49,48 +49,18 @@ The time measurements were obtained by running a batch size of 100'000 derivatio
 
 We further compare our method to one of the current state-of-the-art methods for general analytical IK computation: [*IKFAST*](https://docs.ros.org/en/kinetic/api/moveit_tutorials/html/doc/ikfast/ikfast_tutorial.html).
 We use five typical industrial 6R manipulators that comply with the Pieper criteria. The UR5 robot (three parallel and two intersecting axes), the Puma (spherical wrist and two intersecting axes), and the IRB 6640 (spherical wrist and two parallel axes) resemble real-world manipulators.
-The Spherical (spherical wrist) and 3-Parallel (three parallel axes) robots, on the other hand, are made up by Elias et al.
+The Spherical (spherical wrist) and 3-Parallel (three parallel axes) robots, on the other hand, are made up by [Elias et al.](#credits)
 The input to our implementation is an [*URDF*](https://wiki.ros.org/urdf) file that contains the manipulator's structure.
 The input to IKFast is an equivalent [*COLLADA*](https://www.khronos.org/api/collada) XML file.
 
-<div align="center">
-  <table>
-      <tr>
-          <th></th>
-          <th><b>Ours</b></th>
-          <th><b>IKFast</b></th>
-      </tr>
-      <tr>
-          <td>ABB IRB6640</td>
-          <td><b>36µs</b></td>
-          <td>22×10⁶µs</td>
-      </tr>
-      <tr>
-          <td>Spherical</td>
-          <td><b>36µs</b></td>
-          <td>16×10⁶µs</td>
-      </tr>
-      <tr>
-          <td>UR5</td>
-          <td><b>39µs</b></td>
-          <td>95×10⁷µs</td>
-      </tr>
-      <tr>
-          <td>Puma</td>
-          <td><b>35µs</b></td>
-          <td>37×10⁶µs</td>
-      </tr>
-      <tr>
-          <td>3-Parallel</td>
-          <td><b>36µs</b></td>
-          <td>53×10⁷µs</td>
-      </tr>
-  </table>
-Table: IK-Derivation Times of IKFast and our method
-</div>
-
 <figure figcaption align="center">
-  <img width="65%" src="Images/Computation_Comparison.png"/>
+  <img width="30%" src="Images/Table_Speed_Comp.png"/>
+  <figcaption>Table: IK-Derivation Times of IKFast and our method
+</figcaption>
+</figure>
+<br>
+<figure figcaption align="center">
+  <img width="45%" src="Images/Computation_Comparison.png"/>
   <figcaption>Comparing IK computation times of our method and IKFFast</figcaption>
 </figure>
 
@@ -98,12 +68,12 @@ Table: IK-Derivation Times of IKFast and our method
 To evaluate our implementation's accuracy, we sample 100 random poses throughout the workspace of a representative subset of the above mentioned manipulators.
 We calculate the error metric of each solution by the Frobenius norm of the difference between the homogeneous transformations of our IK's result and the ground truth, i.e., the sum of the squared differences between the entries in the matrices.
 
+<figure figcaption align="center">
+  <img width="65%" src="Images/Table_Error_Average.png"/>
+  <figcaption>Error metric across 100 poses for three representative manipulators</figcaption>
+</figure>
 
-| **IK Average Error across 100 Poses** | ABB IRB 6640 | Puma | 3-Parallel |
-| --- | --- | --- | --- |
-| Average Error | 5.83 x 10^-16 | 1.22 x 10^-10 | 8.69 x 10^-13 |
 
-Table:  error metric across 100 poses for three representative manipulators
 We further compute a two-sided bootstrap 95\% confidence interval at 10'000 samples for the standard deviation of the error:
 <figure figcaption align="center">
   <img src="Images/Bootstrap_Distribution.png"/>
@@ -116,7 +86,7 @@ A. J. Elias and J. T. Wen, “Ik-geo: Unified robot inverse kinematics
 using subproblem decomposition” arXiv:2211.05737, 2024<br>
 Check out their publication and [implementation](https://github.com/rpiRobotics/ik-geo).
 
-[*IKFAST*](https://docs.ros.org/en/kinetic/api/moveit_tutorials/html/doc/ikfast/ikfast_tutorial.html) - the analytical solver that we compare our implementation to, is part of the work of:<br>
+[*IKFAST*](https://docs.ros.org/en/kinetic/api/moveit_tutorials/html/doc/ikfast/ikfast_tutorial.html) - the analytical solver that we compare our implementation to - is part of the work of:<br>
 R. Diankov. “Kinematics and Control of Robot Manipulators”. PhD thesis. Carnegie Mellon University Pittsburgh, Pennsylvania, 2010
 
 ## Usage Example
