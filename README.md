@@ -1,15 +1,59 @@
-# EAIK: A Toolbox for Efficient Analytical Inverse Kinematics
+<h1>
+  <img width=10% align="right" src="Images/TUM_Logo_blau_rgb_p.png"/>
+  <img width=35% align="right" src="Images/CPS_Group_Logo.png"/>
+  <br>
+  EAIK:
+  <br>
+  A Toolbox for Efficient Analytical Inverse Kinematics
+
+</h1>
+
+**Authors:** Daniel Ostermeier and
+Jonathan Külz <br><br>
+Feel free to contact us if you have any questions or suggestions:
+daniel.sebastian.ostermeier@tum.de<br>
+Or open up a [GitHub issue](https://github.com/OstermD/EAIK/issues).
+## Installation
+Our toolbox is currently available for Python>=3.8 on Linux machines with [Eigen3](https://eigen.tuxfamily.org/dox/GettingStarted.html) in the default install directories.<br>
+To install our [Python Toolbox](https://pypi.org/project/EAIK/), simply run:
+```
+pip install EAIK
+```
+
+## Usage Example
+We currently provide support for CSV files containing the homogeneous transformations of each joint in zero-pose with respect to the basis, as well as [ROS URDF](http://wiki.ros.org/urdf) files.
+See our [PyPI Project](https://pypi.org/project/EAIK/) for more elaborate examples.
+A quick example that demonstrates the usability of our implementation is shown in the following Python code-snippet:
+
+#### URDF
+```python
+import numpy as np
+from eaik.IK_URDF import Robot
+
+def example_urdf(path, batch_size):
+
+    bot = Robot(path)
+
+    # Example desired pose
+    example_angles = np.array([0, 1, np.pi/2, 0, 1, np.pi])
+    poses = bot.fwdKin(example_angles)
+
+    ik_solution = bot.IK(pose)
+        
+example_urdf("../tests/UR5.urdf")
+```
+
 ## Overview
 The problem of calculating the inverse kinematics appears for any manipulator with arbitrary degrees of freedom.
-This problem might have exactly one, multiple, infinite, or no solution at all depending on the number of joints, their types, and their respective placement ( i.e., the manipulator's joint configuration).
+This problem might have exactly one, multiple, infinite, or no solution at all depending on the number of joints, their types, and their respective placement (i.e., the manipulator's joint configuration).
 
 Due to this characteristic of the inverse kinematic problem, the existence of a closed-form solution is not guaranteed.
 Current methods for general closed-form derivation comprise the above-mentioned requirements in their final solution (given a solvable manipulator) but suffer from complex setup procedures.
 With this toolbox, we propose a method for automatic inverse kinematic derivation.
-We exploit intersecting and parallel axes to remodel a manipulator's kinematic chain.
+We hereby exploit intersecting and parallel axes to remodel a manipulator's kinematic chain.
 
-This allows us for a hard-coded decomposition of its inverse kinematics into pre-solved subproblems.
-This approach surpasses current analytical methods in terms of usability and derivation speed without compromising on computation time or the completeness of the overall solution set.
+This allows for a hard-coded decomposition of its inverse kinematics into pre-solved subproblems.
+Our approach surpasses current analytical methods in terms of usability and derivation speed without compromising computation time or the completeness of the overall solution set.
 
 <figure figcaption align="center">
   <img src="Images/SP_Visualization.png"/>
@@ -20,7 +64,7 @@ An implementation of our method is made available as an [Open-Source Implementat
 In contrast to other general solvers, our implementation doesn't rely on symbolic manipulation and, therefore, surpasses the derivation speed of these methods by several magnitudes.
 This allows the application of analytical IK in scenarios where both quick and accurate IK derivation and computation are essential - such as modular robotics - which are currently dominated by numeric solvers.
 
-The current implementation of our method (V.0.0.1) allows us to analytically derive the IK of the following manipulator-families:
+The current implementation of our method (V0.0.1) allows us to analytically derive the IK of the following manipulator-families:
 
 
 <figure figcaption align="center">
@@ -28,9 +72,11 @@ The current implementation of our method (V.0.0.1) allows us to analytically der
   <figcaption>Robot configurations that can be solved by the current EAIK implementation</figcaption>
 </figure>
 
-The next version (V.0.0.1) is currently under development and aims to extend towards:
+>**_NOTE:_**  While the current implementation of EAIK (V0.0.1) is able to solve all possible invariances of the spherical wrist robots, only a subset of manipulators with three parallel axes are solvable as of now.
 
-* **6R Manipulators any 3 parallel Axes**
+The next version of EAIK is currently under development and will implement solutions for:
+
+* **6R Manipulators with arbitrary 3 axes in parallel**
 * **All 3R manipulators**
 
 ## Performance
@@ -54,7 +100,7 @@ The input to IKFast is an equivalent [*COLLADA*](https://www.khronos.org/api/col
 
 <figure figcaption align="center">
   <img width="30%" src="Images/Table_Speed_Comp.png"/>
-  <figcaption>Table: IK-Derivation Times of IKFast and our method
+  <figcaption>Table: IK-derivation times of IKFast and our method
 </figcaption>
 </figure>
 <br>
@@ -65,7 +111,7 @@ The input to IKFast is an equivalent [*COLLADA*](https://www.khronos.org/api/col
 
 ## Accuracy
 To evaluate our implementation's accuracy, we sample 100 random poses throughout the workspace of a representative subset of the above mentioned manipulators.
-We calculate the error metric of each solution by the Frobenius norm of the difference between the homogeneous transformations of our IK's result and the ground truth, i.e., the sum of the squared differences between the entries in the matrices.
+We calculate the error metric of each solution by the Frobenius norm of the difference between the homogeneous transformation of our IK's result and the ground truth, i.e., the sum of the squared differences between the entries in the matrices.
 
 <figure figcaption align="center">
   <img width="65%" src="Images/Table_Error_Average.png"/>
@@ -74,7 +120,7 @@ We calculate the error metric of each solution by the Frobenius norm of the diff
 
 
 We further create 10'000 resampled bootstrap distributions (each 100 samples) and calculate their respective means.
-The means of these resamlings, together with a bias corrected and accelerated ([B. Efron](#credits)) 95\% confidence interval are visualized in the following figures:
+The means of these resamplings, together with a bias corrected and accelerated ([B. Efron](#credits)) 95\% confidence interval, are visualized in the following figures:
 <figure figcaption align="center">
   <img src="Images/Bootstrap_Distribution_Mean.png"/>
 </figure>
@@ -90,26 +136,4 @@ R. Diankov. “Kinematics and Control of Robot Manipulators”. PhD thesis. Carn
 
 
 B. Efron. "Better Bootstrap Confidence Intervals". Journal of the American Statistical Association. Vol. 82, No. 397: 171–185, 1987
-## Usage Example
-We currently provide support for CSV files containing the homogeneous transformations of each joint in zero-pose with respect to the basis, as well as [ROS URDF](http://wiki.ros.org/urdf) files.
-See our [Python Toolbox](https://pypi.org/project/EAIK/) for installation instructions.
-A quick example that demonstrates the usability of our implementation is shown in the following Python code-snippet:
 
-#### URDF
-```
-import numpy as np
-
-from eaik.IK_URDF import Robot
-
-def example_urdf(path, batch_size):
-
-    bot = Robot(path)
-
-    # Example desired pose
-    example_angles = np.array([0,1,np.pi/2, 0,1,np.pi])
-    poses = bot.fwdKin(example_angles)
-
-    ik_solution = bot.IK(pose)
-        
-example_urdf("../tests/UR5.urdf")
-```
