@@ -8,21 +8,17 @@
 
 namespace IKS
 {
-    Spherical_Wrist_Robot::Spherical_Wrist_Robot(const Eigen::Matrix<double, 3, 6> &H, const Eigen::Matrix<double, 3, 7> &P)
+    General_3R::General_3R(const Eigen::Matrix<double, 3, 3> &H, const Eigen::Matrix<double, 3, 4> &P)
         : General_Robot(H,P), H(H), P(P)
     {
     }
 
-    IK_Solution Spherical_Wrist_Robot::calculate_IK(const Homogeneous_T &ee_position_orientation) const
+    IK_Solution General_3R::calculate_IK(const Homogeneous_T &ee_position_orientation) const
     {
         IK_Solution solution;
         const Eigen::Vector3d p_0t = ee_position_orientation.block<3, 1>(0, 3);
         const Eigen::Matrix3d r_06 = ee_position_orientation.block<3, 3>(0, 0);
-        const Eigen::Vector3d p_16 = p_0t - this->P.col(0) - r_06 * this->P.col(6);
-
-        // Calculate "Position-IK":
-        std::vector<std::vector<double>> position_solutions;
-        std::vector<bool> position_solution_is_LS;
+        const Eigen::Vector3d p_16 = p_0t - this->P.col(0);
 
         // Check for parallel axes
         if (this->H.col(0).cross(this->H.col(1)).norm() < ZERO_THRESH)
@@ -54,8 +50,8 @@ namespace IKS
                             this->H.col(1));
                     sp1.solve();
                     const double &q2 = sp1.get_theta();
-                    position_solutions.push_back({q1, q2, q3});
-                    position_solution_is_LS.push_back(sp4.solution_is_ls() || sp3.solution_is_ls() || sp1.solution_is_ls());
+                    solution.Q.push_back({q1, q2, q3});
+                    solution.is_LS_vec.push_back(sp4.solution_is_ls() || sp3.solution_is_ls() || sp1.solution_is_ls());
                 }
             }
         }
@@ -88,14 +84,14 @@ namespace IKS
                             this->H.col(1));
                     sp1.solve();
                     const double &q2 = sp1.get_theta();
-                    position_solutions.push_back({q1, q2, q3});
-                    position_solution_is_LS.push_back(sp4.solution_is_ls() || sp3.solution_is_ls() || sp1.solution_is_ls());
+                    solution.Q.push_back({q1, q2, q3});
+                    solution.is_LS_vec.push_back(sp4.solution_is_ls() || sp3.solution_is_ls() || sp1.solution_is_ls());
                 }
             }
         }
         // Check for intersecting axes
         else if (std::fabs(this->H.col(0).cross(this->H.col(1)).transpose() * this->P.col(1)) < ZERO_THRESH)
-        { 
+        {
             // (h1 x h2)(p12)==0) -> h1 intersects h2
             SP3 sp3(this->P.col(3),
                     -this->P.col(2),
@@ -103,7 +99,6 @@ namespace IKS
                     p_16.norm());
 
             sp3.solve();
-
             const std::vector<double> &theta_3 = sp3.get_theta();
             for (const auto &q3 : theta_3)
             {
@@ -124,8 +119,8 @@ namespace IKS
 
                 for (unsigned i = 0; i < theta_1.size(); i++)
                 {
-                    position_solutions.push_back({theta_1.at(i), theta_2.at(i), q3});
-                    position_solution_is_LS.push_back(sp3.solution_is_ls() || sp2.solution_is_ls());
+                    solution.Q.push_back({theta_1.at(i), theta_2.at(i), q3});
+                    solution.is_LS_vec.push_back(sp3.solution_is_ls() || sp2.solution_is_ls());
                 }
             }
         }
@@ -158,8 +153,8 @@ namespace IKS
 
                 for (unsigned i = 0; i < theta_2.size(); i++)
                 {
-                    position_solutions.push_back({q1, theta_2.at(i), theta_3.at(i)});
-                    position_solution_is_LS.push_back(sp3.solution_is_ls() || sp2.solution_is_ls());
+                    solution.Q.push_back({q1, theta_2.at(i), theta_3.at(i)});
+                    solution.is_LS_vec.push_back(sp3.solution_is_ls() || sp2.solution_is_ls());
                 }
             }
         }
@@ -185,50 +180,25 @@ namespace IKS
 
             for (unsigned i = 0; i < q1.size(); i++)
             {
-                position_solutions.push_back({q1.at(i), q2.at(i), q3.at(i)});
-                position_solution_is_LS.push_back(position_kinematics.solution_is_ls());
+                solution.Q.push_back({q1.at(i), q2.at(i), q3.at(i)});
+                solution.is_LS_vec.push_back(position_kinematics.solution_is_ls());
             }
         }
 
-        // Solve "orientation IK"
-
-        for (unsigned i = 0; i < position_solutions.size(); i++) 
+        for(unsigned i = 0; i < solution.Q.size(); i++)
         {
-            const auto& p_solution = position_solutions.at(i);
-            const double &q1 = p_solution.at(0);
-            const double &q2 = p_solution.at(1);
-            const double &q3 = p_solution.at(2);
-
-            Eigen::Matrix3d rot_1_inv = Eigen::AngleAxisd(q1, -this->H.col(0).normalized()).toRotationMatrix();
-            Eigen::Matrix3d rot_2_inv = Eigen::AngleAxisd(q2, -this->H.col(1).normalized()).toRotationMatrix();
-            Eigen::Matrix3d rot_3_inv = Eigen::AngleAxisd(q3, -this->H.col(2).normalized()).toRotationMatrix();
-
-            const Eigen::Matrix3d r_36 = rot_3_inv * rot_2_inv * rot_1_inv * r_06;
-
-            SP4 sp4(this->H.col(3),
-                    this->H.col(5),
-                    this->H.col(4),
-                    this->H.col(3).transpose() * r_36 * this->H.col(5));
-            sp4.solve();
-
-            const std::vector<double> &q5s = sp4.get_theta();
-
-            for (const auto &q5 : q5s)
+            if(!solution.is_LS_vec.at(i))
             {
-                Eigen::Matrix3d rot_5 = Eigen::AngleAxisd(q5, this->H.col(4).normalized()).toRotationMatrix();
-                SP1 sp1_q4(rot_5 * this->H.col(5),
-                           r_36 * this->H.col(5),
-                           this->H.col(3));
-                SP1 sp1_q6(rot_5.transpose() * this->H.col(3),
-                           r_36.transpose() * this->H.col(3),
-                           -this->H.col(5));
-                sp1_q4.solve();
-                sp1_q6.solve();
-                solution.Q.push_back({q1, q2, q3, sp1_q4.get_theta(), q5, sp1_q6.get_theta()});
-                solution.is_LS_vec.push_back(position_solution_is_LS.at(i) || sp4.solution_is_ls() || sp1_q4.solution_is_ls() || sp1_q6.solution_is_ls());
+				IKS::Homogeneous_T result = fwdkin(solution.Q.at(i));
+				double error = (result - ee_position_orientation).norm();
+                std::cout<<result<<std::endl;
+                std::cout<<ee_position_orientation<<std::endl;
+                if(error > ZERO_THRESH)
+                {
+                    solution.is_LS_vec.at(i) = true;
+                }
             }
         }
-
         return solution;
     }
 };

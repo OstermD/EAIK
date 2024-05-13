@@ -70,7 +70,7 @@ bool ik_test_3P()
 	Eigen::Matrix<double, 3, 7> three_parallel_P;
 	three_parallel_P << ez, ey, ey, ey, ey, ey + ex, ex;
 
-	IKS::General_Robot three_parallel(three_parallel_H, three_parallel_P);
+	IKS::General_6R three_parallel(three_parallel_H, three_parallel_P);
 
 	
 	std::vector<IKS::Homogeneous_T> ee_poses;

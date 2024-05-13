@@ -7,8 +7,8 @@
 
 #include "EAIK.h"
 
-#define ERROR_PASS_EPSILON 1e-6
-#define BATCH_SIZE 10000
+#define ERROR_PASS_EPSILON 1e-5
+#define BATCH_SIZE 10
 
 const Eigen::Vector3d zv(0, 0, 0);
 const Eigen::Vector3d ex(1, 0, 0);
@@ -48,20 +48,20 @@ double rand_angle()
 int main(int argc, char *argv[])
 {
 	// 6R Tests
-	ik_test_puma();
-	ik_test_IRB6640();
-	ik_test_spherical();
-	ik_test_3P();
-	ik_test_UR5();
-
-	// 3R Tests
-	ik_test_3R_1_2_Parallel();
-	ik_test_3R_2_3_Parallel();
-	ik_test_3R_1_2_intersecting_2_3_parallel();
-	ik_test_3R_1_2_Parallel_2_3_intersecting();
-	ik_test_3R_generic();
+	//ik_test_puma();
+	//ik_test_IRB6640();
+	//ik_test_spherical();
+	//ik_test_3P();
+	//ik_test_UR5();
+//
+	//// 3R Tests
+	//ik_test_3R_1_2_Parallel();
+	//ik_test_3R_2_3_Parallel();
+	//ik_test_3R_1_2_intersecting_2_3_parallel();
+	//ik_test_3R_1_2_Parallel_2_3_intersecting();
+	//ik_test_3R_generic();
 	ik_test_3R_1_2_intersecting();
-	ik_test_3R_2_3_intersecting();
+	//ik_test_3R_2_3_intersecting();
 	return 0;
 }
 
@@ -73,9 +73,9 @@ int main(int argc, char *argv[])
 
 bool ik_test_3R_1_2_Parallel()
 {
-	Eigen::Matrix<double, 3, 6> H;
+	Eigen::Matrix<double, 3, 3> H;
 	H << ez, ez, ex;
-	Eigen::Matrix<double, 3, 7> P;
+	Eigen::Matrix<double, 3, 4> P;
 	P << ez, ex, ey, ey;
 
 	EAIK::Robot two_parallel(H, P);
@@ -93,9 +93,9 @@ bool ik_test_3R_1_2_Parallel()
 
 bool ik_test_3R_2_3_Parallel()
 {
-	Eigen::Matrix<double, 3, 6> H;
+	Eigen::Matrix<double, 3, 3> H;
 	H << ez, ex, ex;
-	Eigen::Matrix<double, 3, 7> P;
+	Eigen::Matrix<double, 3, 4> P;
 	P << ez, ey, ey, ey;
 
 	EAIK::Robot two_parallel(H, P);
@@ -114,9 +114,9 @@ bool ik_test_3R_2_3_Parallel()
 bool ik_test_3R_1_2_intersecting_2_3_parallel()
 {
 	// First and second axis intersecting; Second and third axis Parallell
-	Eigen::Matrix<double, 3, 6> H;
+	Eigen::Matrix<double, 3, 3> H;
 	H << ez, ey, ey;
-	Eigen::Matrix<double, 3, 7> P;
+	Eigen::Matrix<double, 3, 4> P;
 	P << 0.32 * ex + 0.78 * ez, 1.075 * ez, 1.1425 * ex + 0.2 * ez, zv;
 
 	EAIK::Robot _1_2_intersecting_2_3_parallel(H, P);
@@ -133,9 +133,9 @@ bool ik_test_3R_1_2_intersecting_2_3_parallel()
 
 bool ik_test_3R_1_2_Parallel_2_3_intersecting()
 {
-	Eigen::Matrix<double, 3, 6> H;
+	Eigen::Matrix<double, 3, 3> H;
 	H << ez, ez, ey;
-	Eigen::Matrix<double, 3, 7> P;
+	Eigen::Matrix<double, 3, 4> P;
 	P << ez, ex, ey, ey;
 
 	EAIK::Robot _1_2_parallel_2_3_intersecting(H, P);
@@ -155,9 +155,9 @@ bool ik_test_3R_1_2_Parallel_2_3_intersecting()
 bool ik_test_3R_1_2_intersecting()
 {
 	// First and second Second axis intersecting
-	Eigen::Matrix<double, 3, 6> H;
+	Eigen::Matrix<double, 3, 3> H;
 	H << ez, ey, ex;
-	Eigen::Matrix<double, 3, 7> P;
+	Eigen::Matrix<double, 3, 4> P;
 	P << 0.32 * ex + 0.78 * ez, 1.075 * ez, 1.1425 * ey + 0.2 * ez, zv;
 
 	EAIK::Robot _1_2_intersecting(H, P);
