@@ -19,7 +19,6 @@ This approach surpasses current analytical methods in terms of usability and der
 An implementation of our method is made available as an [Open-Source Implementation](https://github.com/OstermD/EAIK), of a [Python Toolbox](https://pypi.org/project/EAIK/) that allows automatic analytical IK derivation and computation for a large set of manipulators.
 In contrast to other general solvers, our implementation doesn't rely on symbolic manipulation and, therefore, surpasses the derivation speed of these methods by several magnitudes.
 This allows the application of analytical IK in scenarios where both quick and accurate IK derivation and computation are essential - such as modular robotics - which are currently dominated by numeric solvers.
-More information regarding additional experimental results, future contributions and the source-code are available on our project website.
 
 The current implementation of our method (V.0.0.1) allows us to analytically derive the IK of the following manipulator-families:
 
@@ -74,10 +73,10 @@ We calculate the error metric of each solution by the Frobenius norm of the diff
 </figure>
 
 
-We further compute a two-sided bootstrap 95\% confidence interval at 10'000 samples for the standard deviation of the error:
+We further create 10'000 resampled bootstrap distributions (each 100 samples) and calculate their respective means.
+The means of these resamlings, together with a bias corrected and accelerated ([B. Efron](#credits)) 95\% confidence interval are visualized in the following figures:
 <figure figcaption align="center">
-  <img src="Images/Bootstrap_Distribution.png"/>
-  <figcaption>Bootstrap distribution for IK error standard deviation</figcaption>
+  <img src="Images/Bootstrap_Distribution_Mean.png"/>
 </figure>
 
 ## Credits
@@ -89,6 +88,8 @@ Check out their publication and [implementation](https://github.com/rpiRobotics/
 [*IKFAST*](https://docs.ros.org/en/kinetic/api/moveit_tutorials/html/doc/ikfast/ikfast_tutorial.html) - the analytical solver that we compare our implementation to - is part of the work of:<br>
 R. Diankov. “Kinematics and Control of Robot Manipulators”. PhD thesis. Carnegie Mellon University Pittsburgh, Pennsylvania, 2010
 
+
+B. Efron. "Better Bootstrap Confidence Intervals". Journal of the American Statistical Association. Vol. 82, No. 397: 171–185, 1987
 ## Usage Example
 We currently provide support for CSV files containing the homogeneous transformations of each joint in zero-pose with respect to the basis, as well as [ROS URDF](http://wiki.ros.org/urdf) files.
 See our [Python Toolbox](https://pypi.org/project/EAIK/) for installation instructions.
