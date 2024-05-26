@@ -62,6 +62,7 @@ namespace IKS
             this->H.col(1).cross(this->H.col(2)).norm() < ZERO_THRESH)
         {
             // h1 || h2 || h3 -> first three axes parallel
+            throw std::runtime_error("This manipulator type (Spherical Wrist + Axis 1,2,3 parallel) is not yet solvable by EAIK.");
         }
         else if (this->H.col(1).cross(this->H.col(2)).norm() < ZERO_THRESH &&
                  this->H.col(1).cross(this->H.col(3)).norm() < ZERO_THRESH &&
@@ -169,12 +170,14 @@ namespace IKS
                  this->H.col(3).cross(this->H.col(4)).norm() < ZERO_THRESH)
         {
             // h3 || h4 || h5
+            throw std::runtime_error("This manipulator type (Spherical Wrist + Axis 3,4,5 parallel) is not yet solvable by EAIK.");
         }
         else if (this->H.col(3).cross(this->H.col(4)).norm() < ZERO_THRESH &&
                  this->H.col(3).cross(this->H.col(5)).norm() < ZERO_THRESH &&
                  this->H.col(4).cross(this->H.col(5)).norm() < ZERO_THRESH)
         {
             // h4 || h5 || h6
+            throw std::runtime_error("This manipulator type (Spherical Wrist + Axis 4,5,6 parallel) is not yet solvable by EAIK.");
         }
 
         return solution;

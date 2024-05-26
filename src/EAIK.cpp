@@ -38,9 +38,6 @@ namespace EAIK
             break;
         
         case 3:
-                std::cout<<P<<std::endl;
-                std::cout<<P_new<<std::endl;
-                std::cout<<H<<std::endl;
                 bot_kinematics = std::make_unique<IKS::General_3R>(H, P_new);
                 original_kinematics = std::make_unique<IKS::General_3R>(H, P);  
             break;
