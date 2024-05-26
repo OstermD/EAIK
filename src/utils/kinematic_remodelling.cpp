@@ -47,7 +47,7 @@ namespace EAIK
         Eigen::MatrixXd P_new = P;
         Eigen::Vector3d p0_i_plus1(0,0,0);
 
-        if(P.cols() == 6)
+        if(P.cols() == 7)
         {
             // Remodel Robot "Base"
             for(unsigned i = 0; i < H.cols()-4; i++)
