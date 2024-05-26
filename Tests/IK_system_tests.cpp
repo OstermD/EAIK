@@ -21,6 +21,7 @@ bool ik_test_IRB6640();
 bool ik_test_spherical();
 bool ik_test_3P();
 bool ik_test_UR5();
+bool ik_test_two_Sphericals();
 
 // 3R Tests
 bool ik_test_3R_1_2_Parallel();
@@ -48,11 +49,11 @@ double rand_angle()
 int main(int argc, char *argv[])
 {
 	// 6R Tests
-	//ik_test_puma();
-	//ik_test_IRB6640();
-	//ik_test_spherical();
-	//ik_test_3P();
-	//ik_test_UR5();
+	ik_test_puma();
+	ik_test_IRB6640();
+	ik_test_spherical();
+	ik_test_3P();
+	ik_test_UR5();
 //
 	//// 3R Tests
 	//ik_test_3R_1_2_Parallel();
@@ -60,8 +61,9 @@ int main(int argc, char *argv[])
 	//ik_test_3R_1_2_intersecting_2_3_parallel();
 	//ik_test_3R_1_2_Parallel_2_3_intersecting();
 	//ik_test_3R_generic();
-	ik_test_3R_1_2_intersecting();
+		//ik_test_3R_1_2_intersecting();
 	//ik_test_3R_2_3_intersecting();
+	ik_test_two_Sphericals();
 	return 0;
 }
 
@@ -324,6 +326,33 @@ bool ik_test_puma()
 	}
 
 	return evaluate_test("IK spherical wrist - puma", spherical, ee_poses);
+}
+
+// Two spherical wrists
+bool ik_test_two_Sphericals()
+{
+	const Eigen::Vector3d zv(0, 0, 0);
+	const Eigen::Vector3d ex(1, 0, 0);
+	const Eigen::Vector3d ey(0, 1, 0);
+	const Eigen::Vector3d ez(0, 0, 1);
+
+	Eigen::Matrix<double, 3, 6> H;
+	H << ey, -ez, -ey, -ey, -ez, ey;
+	Eigen::Matrix<double, 3, 7> P;
+	P << 0.0528192*ex, zv, zv, 0.140253*ex, zv, zv, zv;
+
+	EAIK::Robot bot(H, P);
+
+	
+	std::vector<IKS::Homogeneous_T> ee_poses;
+	ee_poses.reserve(BATCH_SIZE);
+	for(unsigned i = 0; i < BATCH_SIZE; i++)
+	{
+		ee_poses.push_back(bot.fwdkin({rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle()}));
+
+	}
+
+	return evaluate_test("IK two spherical wrists", bot, ee_poses);
 }
 
 bool evaluate_test(const std::string &name_test, const EAIK::Robot &robot, const std::vector<IKS::Homogeneous_T> &ee_poses)
