@@ -19,13 +19,13 @@ namespace IKS
         IK_Solution solution_t_12;
         const Eigen::Vector3d p_0t = ee_position_orientation.block<3, 1>(0, 3);
         const Eigen::Matrix3d r_03 = ee_position_orientation.block<3, 3>(0, 0);
-        const Eigen::Vector3d p_03 = p_0t;// - r_03*this->P.col(3);        
+        const Eigen::Vector3d p_13 = p_0t - this->P.col(0) - r_03*this->P.col(3);        
 
         // Checking for parallel Axes
         if (this->H.col(0).cross(this->H.col(1)).norm() < ZERO_THRESH)
         {
             // Axis 1 || Axis 2
-            SP3 sp3(this->P.col(2), -this->P.col(1), this->H.col(1), p_03.norm());
+            SP3 sp3(this->P.col(2), -this->P.col(1), this->H.col(1), p_13.norm());
             sp3.solve();
 
             const std::vector<double> &theta_2 = sp3.get_theta();
@@ -33,7 +33,7 @@ namespace IKS
             for (const auto &q2 : theta_2)
             {
                 const Eigen::Matrix3d r12 = Eigen::AngleAxisd(q2, this->H.col(1).normalized()).toRotationMatrix();
-                SP1 sp1(p_03, this->P.col(1)+r12*this->P.col(2), -this->H.col(0));
+                SP1 sp1(p_13, this->P.col(1)+r12*this->P.col(2), -this->H.col(0));
                 sp1.solve();
 
                 solution_t_12.Q.push_back({sp1.get_theta(), q2});
@@ -43,7 +43,7 @@ namespace IKS
         else if (std::fabs(this->H.col(0).cross(this->H.col(1)).transpose() * this->P.col(1)) < ZERO_THRESH)
         {
             // (h1 x h2)(p12)==0) -> h1 intersects h2
-            SP2 sp2(p_03, this->P.col(2), -this->H.col(0), this->H.col(1));
+            SP2 sp2(p_13, this->P.col(2), -this->H.col(0), this->H.col(1));
             sp2.solve();
 
             for(unsigned i = 0; i < sp2.get_theta_1().size(); i++)
@@ -56,7 +56,7 @@ namespace IKS
         }
         else
         {
-            double d = this->H.col(0).transpose()*(p_03-this->P.col(1));
+            double d = this->H.col(0).transpose()*(p_13-this->P.col(1));
             SP4 sp4(this->H.col(0), this->P.col(2), this->H.col(1), d);
             sp4.solve();
 
@@ -65,7 +65,7 @@ namespace IKS
             for (const auto &q2 : theta_2)
             {
                 const Eigen::Matrix3d r12 = Eigen::AngleAxisd(q2, this->H.col(1).normalized()).toRotationMatrix();
-                SP1 sp1(p_03, this->P.col(1)+r12*this->P.col(2), -this->H.col(0));
+                SP1 sp1(p_13, this->P.col(1)+r12*this->P.col(2), -this->H.col(0));
                 sp1.solve();
 
                 solution_t_12.Q.push_back({sp1.get_theta(), q2});
@@ -99,8 +99,8 @@ namespace IKS
 
                 if(error > ZERO_THRESH)
                 {
-                    std::cout<< result<<std::endl;
-                    std::cout<< ee_position_orientation<<std::endl;
+                    //std::cout<< result<<std::endl;
+                    //std::cout<< ee_position_orientation<<std::endl;
                     solution.is_LS_vec.at(i) = true;
                 }
             }
