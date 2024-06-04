@@ -24,11 +24,16 @@ bool ik_test_UR5();
 bool ik_test_two_Sphericals();
 
 // 3R Tests
+bool ik_test_3R_generic();
 bool ik_test_3R_1_2_Parallel();
 bool ik_test_3R_2_3_Parallel();
 bool ik_test_3R_1_2_intersecting_2_3_parallel();
 bool ik_test_3R_1_2_Parallel_2_3_intersecting();
-bool ik_test_3R_generic();
+bool ik_test_3R_1_2_intersecting_2_3_intersecting();
+bool ik_test_3R_1_2_3_intersecting();
+bool ik_test_3R_1_2_3_intersecting_2();
+bool ik_test_3R_1_2_3_parallel();
+bool ik_test_3R_1_2_3_parallel_2();
 bool ik_test_3R_1_2_intersecting();
 bool ik_test_3R_2_3_intersecting();
 
@@ -54,16 +59,21 @@ int main(int argc, char *argv[])
 	ik_test_spherical();
 	ik_test_3P();
 	ik_test_UR5();
-//
-	//// 3R Tests
-	//ik_test_3R_1_2_Parallel();
-	//ik_test_3R_2_3_Parallel();
-	//ik_test_3R_1_2_intersecting_2_3_parallel();
-	//ik_test_3R_1_2_Parallel_2_3_intersecting();
-	//ik_test_3R_generic();
-		//ik_test_3R_1_2_intersecting();
-	//ik_test_3R_2_3_intersecting();
 	ik_test_two_Sphericals();
+
+	//// 3R Tests
+	ik_test_3R_1_2_Parallel();
+	ik_test_3R_2_3_Parallel();
+	ik_test_3R_1_2_intersecting_2_3_parallel();
+	ik_test_3R_1_2_Parallel_2_3_intersecting();
+	ik_test_3R_generic();
+	ik_test_3R_1_2_intersecting();
+	ik_test_3R_2_3_intersecting();
+	ik_test_3R_1_2_intersecting_2_3_intersecting();
+	ik_test_3R_1_2_3_intersecting();
+	ik_test_3R_1_2_3_intersecting_2();
+	ik_test_3R_1_2_3_parallel();
+	ik_test_3R_1_2_3_parallel_2();
 	return 0;
 }
 
@@ -153,6 +163,109 @@ bool ik_test_3R_1_2_Parallel_2_3_intersecting()
 	return evaluate_test("IK 3R - 1,2 parallel 2,3 intersecting", _1_2_parallel_2_3_intersecting, ee_poses);
 }
 
+bool ik_test_3R_1_2_3_intersecting()
+{
+	// Spherical wrist case with first and last axes parallel
+	Eigen::Matrix<double, 3, 3> H;
+	H << ex, ey, ex;
+	Eigen::Matrix<double, 3, 4> P;
+	P << zv, zv, 0.2 * ex, zv;
+
+	EAIK::Robot _1_2_3_intersecting(H, P);
+	
+	std::vector<IKS::Homogeneous_T> ee_poses;
+	ee_poses.reserve(BATCH_SIZE);
+	for(unsigned i = 0; i < BATCH_SIZE; i++)
+	{
+		ee_poses.push_back(_1_2_3_intersecting.fwdkin({rand_angle(), rand_angle(), rand_angle()}));
+
+	}
+
+	return evaluate_test("IK 3R - 1,2,3 Intersecting - Spherical Wrist (2 Parallel)", _1_2_3_intersecting, ee_poses);
+}
+
+bool ik_test_3R_1_2_3_intersecting_2()
+{
+	// Spherical wrist case with three orthonormal axes
+	Eigen::Matrix<double, 3, 3> H;
+	H << ex, ey, ez;
+	Eigen::Matrix<double, 3, 4> P;
+	P << zv, zv, ez, 0.2 * ex;
+
+	EAIK::Robot _1_2_3_intersecting(H, P);
+	
+	std::vector<IKS::Homogeneous_T> ee_poses;
+	ee_poses.reserve(BATCH_SIZE);
+	for(unsigned i = 0; i < BATCH_SIZE; i++)
+	{
+		ee_poses.push_back(_1_2_3_intersecting.fwdkin({rand_angle(), rand_angle(), rand_angle()}));
+
+	}
+
+	return evaluate_test("IK 3R - 1,2,3 Intersecting - Spherical Wrist (3 Orthonormal)", _1_2_3_intersecting, ee_poses);
+}
+
+
+bool ik_test_3R_1_2_intersecting_2_3_intersecting()
+{
+	// No spherical wrist, but 1 intersecting 2 and 2 intersecting 3
+	Eigen::Matrix<double, 3, 3> H;
+	H << ez, ey, ex;
+	Eigen::Matrix<double, 3, 4> P;
+	P << zv, zv, 0.2 * ey, zv;
+
+	EAIK::Robot _1_2_intersecting_2_3_intersecting(H, P);
+	
+	std::vector<IKS::Homogeneous_T> ee_poses;
+	ee_poses.reserve(BATCH_SIZE);
+	for(unsigned i = 0; i < BATCH_SIZE; i++)
+	{
+		ee_poses.push_back(_1_2_intersecting_2_3_intersecting.fwdkin({rand_angle(), rand_angle(), rand_angle()}));
+
+	}
+
+	return evaluate_test("IK 3R - 1,2 Intersecting, 2,3 Intersecting", _1_2_intersecting_2_3_intersecting, ee_poses);
+}
+
+bool ik_test_3R_1_2_3_parallel()
+{
+	// Three parallel axes (Inherently redundant robot!)
+	Eigen::Matrix<double, 3, 3> H;
+	H << ez, ez, ez;
+	Eigen::Matrix<double, 3, 4> P;
+	P << zv, ez, ez, zv;
+
+	EAIK::Robot _1_2_3_parallel(H, P);
+	
+	std::vector<IKS::Homogeneous_T> ee_poses;
+	ee_poses.reserve(BATCH_SIZE);
+	for(unsigned i = 0; i < BATCH_SIZE; i++)
+	{
+		ee_poses.push_back(_1_2_3_parallel.fwdkin({rand_angle(), rand_angle(), rand_angle()}));
+	}
+
+	return evaluate_test("IK 3R - 1,2,3 Parallel", _1_2_3_parallel, ee_poses);
+}
+
+bool ik_test_3R_1_2_3_parallel_2()
+{
+	// Three parallel axes with offsets
+	Eigen::Matrix<double, 3, 3> H;
+	H << ez, ez, ez;
+	Eigen::Matrix<double, 3, 4> P;
+	P << zv, ez+ex, ez+ey, zv;
+
+	EAIK::Robot _1_2_3_parallel(H, P);
+	
+	std::vector<IKS::Homogeneous_T> ee_poses;
+	ee_poses.reserve(BATCH_SIZE);
+	for(unsigned i = 0; i < BATCH_SIZE; i++)
+	{
+		ee_poses.push_back(_1_2_3_parallel.fwdkin({rand_angle(), rand_angle(), rand_angle()}));
+	}
+
+	return evaluate_test("IK 3R - 1,2,3 Parallel + Offsets", _1_2_3_parallel, ee_poses);
+}
 
 bool ik_test_3R_1_2_intersecting()
 {
@@ -178,9 +291,9 @@ bool ik_test_3R_2_3_intersecting()
 {
 	// Second and third axis intersecting
 	Eigen::Matrix<double, 3, 3> H;
-	H << ez, -ey, -ey;
+	H << ez, -ey, -ex;
 	Eigen::Matrix<double, 3, 4> P;
-	P << 0.54864 * ez, -0.14224 * ey + 0.07493 * ez, 0.4318 * ex - 0.0254 * ey, 0.0381 * ey + 0.3517 * ez;
+	P << 0.54864 * ez, -0.14224 * ex, 0.07493 * ey, 0.4318 * ex - 0.0254 * ey;
 	EAIK::Robot two_three_intersecting(H, P);
 	
 	std::vector<IKS::Homogeneous_T> ee_poses;

@@ -5,6 +5,7 @@
 
 #include "sp.h"
 #include "IKS.h"
+#include "utils/kinematic_utils.h"
 
 namespace IKS
 {
@@ -21,8 +22,48 @@ namespace IKS
         const Eigen::Matrix3d r_03 = ee_position_orientation.block<3, 3>(0, 0);
         const Eigen::Vector3d p_13 = p_0t - this->P.col(0) - r_03*this->P.col(3);        
 
-        // Checking for parallel Axes
-        if (this->H.col(0).cross(this->H.col(1)).norm() < ZERO_THRESH)
+        // Checking for intersecting/parallel Axes
+        if (std::fabs(this->H.col(1).cross(this->H.col(2)).transpose() * this->P.col(2)) < ZERO_THRESH && !this->H.col(1).cross(this->H.col(2)).isZero(ZERO_THRESH))
+        {
+            // (h2 x h3)(p23)==0) -> h2 intersects h3 - make sure they are not parallel!
+        
+            if(this->P.col(1).isZero(ZERO_THRESH) && this->P.col(2).isZero())
+            {
+                // Spherical-Wrist case with three intersecting axes
+                SP4 sp4(this->H.col(0), this->H.col(2), this->H.col(1), this->H.col(0).transpose()*r_03*this->H.col(2));
+                sp4.solve();
+
+                for(const auto& q2 : sp4.get_theta())
+                {
+                    const Eigen::Matrix3d r12 = Eigen::AngleAxisd(q2, this->H.col(1).normalized()).toRotationMatrix();
+                    SP1 sp1_q1(r_03*this->H.col(2), r12*this->H.col(2), -this->H.col(0));
+                    sp1_q1.solve();
+
+                    const Eigen::Matrix3d r01 = Eigen::AngleAxisd(sp1_q1.get_theta(), this->H.col(0).normalized()).toRotationMatrix();
+                    const Eigen::Vector3d hn = create_normal_vector(this->H.col(2));
+
+                    SP1 sp1_q3(hn, r12.transpose()*r01.transpose()*r_03*hn, this->H.col(2));
+                    sp1_q3.solve();
+                    solution.Q.push_back({sp1_q1.get_theta(), q2, sp1_q3.get_theta()});
+                    solution.is_LS_vec.push_back(sp1_q1.solution_is_ls()||sp4.solution_is_ls()||sp1_q3.solution_is_ls());
+                }
+
+                // All angles calculated in this case
+                return solution;
+            }
+            SP1 sp1_q1(this->P.col(1), p_13, this->H.col(0));
+            sp1_q1.solve();
+
+            const double q1 = sp1_q1.get_theta();
+            const Eigen::Matrix3d r01 = Eigen::AngleAxisd(q1, this->H.col(0).normalized()).toRotationMatrix();
+
+            // Solve Theta 2 via orientation kinematics
+            SP1 sp1_q2(this->H.col(2),r01.transpose()*r_03*this->H.col(2),this->H.col(1));
+            sp1_q2.solve();
+            solution_t_12.Q.push_back({q1,sp1_q2.get_theta()});
+            solution_t_12.is_LS_vec.push_back(sp1_q1.solution_is_ls()||sp1_q2.solution_is_ls());
+        }
+        else if (this->H.col(0).cross(this->H.col(1)).norm() < ZERO_THRESH)
         {
             // Axis 1 || Axis 2
             SP3 sp3(this->P.col(2), -this->P.col(1), this->H.col(1), p_13.norm());
@@ -81,7 +122,8 @@ namespace IKS
             const Eigen::Matrix3d r12 = Eigen::AngleAxisd(q2, this->H.col(1).normalized()).toRotationMatrix();
             const Eigen::Matrix3d r01 = Eigen::AngleAxisd(q1, this->H.col(0).normalized()).toRotationMatrix();
 
-            const Eigen::Vector3d hn = this->H.col(2).cross(Eigen::Vector3d(1,0,0)); // Vector that's not collinear to h3
+            // hn must not be collinear to H3!
+            const Eigen::Vector3d hn = create_normal_vector(this->H.col(2));
 
             SP1 sp1(hn, r12.transpose()*r01.transpose()*r_03*hn, this->H.col(2));
             sp1.solve();
@@ -92,15 +134,13 @@ namespace IKS
         // Finding 6DOF Problem for 3R is overconstrained -> "Throw away" extraneous orientation solutions
         for(unsigned i = 0; i < solution.Q.size(); i++)
         {
-            if(true)
+            if(!solution.is_LS_vec.at(i))
             {
 				IKS::Homogeneous_T result = fwdkin(solution.Q.at(i));
 				double error = (result - ee_position_orientation).norm();
 
                 if(error > ZERO_THRESH)
                 {
-                    //std::cout<< result<<std::endl;
-                    //std::cout<< ee_position_orientation<<std::endl;
                     solution.is_LS_vec.at(i) = true;
                 }
             }
