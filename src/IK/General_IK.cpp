@@ -8,12 +8,44 @@
 
 namespace IKS
 {
-    General_Robot::General_Robot(const Eigen::Matrix<double, 3, 6> &H, const Eigen::Matrix<double, 3, 7> &P)
+    General_Robot::General_Robot(const Eigen::MatrixXd &H, const Eigen::MatrixXd &P)
         : H(H), P(P)
     {
     }
 
-    IK_Solution General_Robot::calculate_IK(const Homogeneous_T &ee_position_orientation) const
+    // Expects Eigen::Matrix<double, 3, N> H axes, Eigen::Matrix<double, 3, N> P offsets and N angles for N joints
+    Homogeneous_T General_Robot::fwdkin(const std::vector<double> &Q) const
+    {
+        // check if H and P are correcly sized
+        const int num_axes = Q.size();
+        if(H.rows() != 3 || H.cols() != num_axes || P.rows() != 3 || P.cols() != num_axes+1)
+        {
+            throw std::runtime_error("fwd_kinematics_ndof was given wrong kinematic model!");
+        }
+
+        Eigen::Vector3d p = P.col(0);
+        Eigen::Matrix3d R = Eigen::Matrix3d::Identity();
+        R.setIdentity();
+
+        for (unsigned int i = 0; i < num_axes; i++)
+        {
+            R = R * Eigen::AngleAxisd(Q.at(i), H.col(i).normalized()).toRotationMatrix();
+            p = p + R * P.col(i + 1);
+        }
+
+        Homogeneous_T result = Homogeneous_T::Identity();
+        result.block<3, 3>(0, 0) = R;
+        result.block<3, 1>(0, 3) = p;
+        result(3, 3) = 1;
+        return result;
+    }
+
+    General_6R::General_6R(const Eigen::Matrix<double, 3, 6> &H, const Eigen::Matrix<double, 3, 7> &P)
+        : General_Robot(H,P), H(H), P(P)
+    {
+    }
+
+    IK_Solution General_6R::calculate_IK(const Homogeneous_T &ee_position_orientation) const
     {
         IK_Solution solution;
         
@@ -30,6 +62,7 @@ namespace IKS
             this->H.col(1).cross(this->H.col(2)).norm() < ZERO_THRESH)
         {
             // h1 || h2 || h3 -> first three axes parallel
+            throw std::runtime_error("This manipulator type (Spherical Wrist + Axis 1,2,3 parallel) is not yet solvable by EAIK.");
         }
         else if (this->H.col(1).cross(this->H.col(2)).norm() < ZERO_THRESH &&
                  this->H.col(1).cross(this->H.col(3)).norm() < ZERO_THRESH &&
@@ -137,19 +170,16 @@ namespace IKS
                  this->H.col(3).cross(this->H.col(4)).norm() < ZERO_THRESH)
         {
             // h3 || h4 || h5
+            throw std::runtime_error("This manipulator type (Spherical Wrist + Axis 3,4,5 parallel) is not yet solvable by EAIK.");
         }
         else if (this->H.col(3).cross(this->H.col(4)).norm() < ZERO_THRESH &&
                  this->H.col(3).cross(this->H.col(5)).norm() < ZERO_THRESH &&
                  this->H.col(4).cross(this->H.col(5)).norm() < ZERO_THRESH)
         {
             // h4 || h5 || h6
+            throw std::runtime_error("This manipulator type (Spherical Wrist + Axis 4,5,6 parallel) is not yet solvable by EAIK.");
         }
 
         return solution;
-    }
-
-    Homogeneous_T General_Robot::fwdkin(const std::vector<double> &Q) const
-    {
-        return fwd_kinematics_ndof(this->H, this->P, Q);
     }
 };

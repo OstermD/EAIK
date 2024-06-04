@@ -18,13 +18,37 @@ namespace IKS
 
     class General_Robot
     {
-        // General 6DOF robot kinematics
+        // General Robot kinematics
     public:
-        General_Robot(const Eigen::Matrix<double, 3, 6> &H, const Eigen::Matrix<double, 3, 7> &P);
-        virtual IK_Solution calculate_IK(const Homogeneous_T &ee_position_orientation) const;
+        General_Robot(const Eigen::MatrixXd &H, const Eigen::MatrixXd &P);
+        virtual IK_Solution calculate_IK(const Homogeneous_T &ee_position_orientation) const = 0;
         virtual Homogeneous_T fwdkin(const std::vector<double> &Q) const final;
 
     protected:
+        Eigen::MatrixXd H;
+        Eigen::MatrixXd P;
+    };
+
+    class General_3R : public General_Robot
+    {
+        // General 3R Manipulator
+    public:
+        General_3R(const Eigen::Matrix<double, 3, 3> &H, const Eigen::Matrix<double, 3, 4> &P);
+        IK_Solution calculate_IK(const Homogeneous_T &ee_position_orientation) const override;
+
+    private:
+        Eigen::Matrix<double, 3, 3> H;
+        Eigen::Matrix<double, 3, 4> P;
+    };
+
+    class General_6R : public General_Robot
+    {
+        // 6DOF Robot kinematics with spherical wrist (3 consecutive intersecting axes at the endeffector)
+    public:
+        General_6R(const Eigen::Matrix<double, 3, 6> &H, const Eigen::Matrix<double, 3, 7> &P);
+        IK_Solution calculate_IK(const Homogeneous_T &ee_position_orientation) const override;
+
+    private:
         Eigen::Matrix<double, 3, 6> H;
         Eigen::Matrix<double, 3, 7> P;
     };
@@ -35,6 +59,10 @@ namespace IKS
     public:
         Spherical_Wrist_Robot(const Eigen::Matrix<double, 3, 6> &H, const Eigen::Matrix<double, 3, 7> &P);
         IK_Solution calculate_IK(const Homogeneous_T &ee_position_orientation) const override;
+
+    private:
+        Eigen::Matrix<double, 3, 6> H;
+        Eigen::Matrix<double, 3, 7> P;
     };
 }
 

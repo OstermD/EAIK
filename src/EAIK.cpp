@@ -15,21 +15,35 @@ namespace EAIK
         }
 
         Eigen::MatrixXd P_new = remodel_kinematics(H, P, ZERO_THRESHOLD, AXIS_INTERSECT_THRESHOLD);
-        original_kinematics = std::make_unique<IKS::General_Robot>(H, P);
-        if(H.cols() != 6 || P.cols() != 7)
+        if(P.cols() != H.cols() + 1)
         {
-            throw std::runtime_error("Currently, only 6DOF Robots are solvable with EAIK.");
+            throw std::runtime_error("Wrong input dimensions for H and P. Note that #P = #H+1.");
         }
 
-        // Check if last three axes intersect
-        if (P_new.col(P_new.cols()-3).norm() < ZERO_THRESHOLD && P_new.col(P_new.cols()-2).norm() < ZERO_THRESHOLD)
-        {   
-            spherical_wrist = true;
-            bot_kinematics = std::make_unique<IKS::Spherical_Wrist_Robot>(H, P_new);
-        }
-        else
+        switch (H.cols())
         {
-            bot_kinematics = std::make_unique<IKS::General_Robot>(H, P_new);
+        case 6:
+            // Check if last three axes intersect
+            if (P_new.col(P_new.cols()-3).norm() < ZERO_THRESHOLD && P_new.col(P_new.cols()-2).norm() < ZERO_THRESHOLD)
+            {   
+                spherical_wrist = true;
+                bot_kinematics = std::make_unique<IKS::Spherical_Wrist_Robot>(H, P_new);
+                original_kinematics = std::make_unique<IKS::Spherical_Wrist_Robot>(H, P);
+            }
+            else
+            {
+                bot_kinematics = std::make_unique<IKS::General_6R>(H, P_new);
+                original_kinematics = std::make_unique<IKS::General_6R>(H, P);
+            }
+            break;
+        
+        case 3:
+                bot_kinematics = std::make_unique<IKS::General_3R>(H, P_new);
+                original_kinematics = std::make_unique<IKS::General_3R>(H, P);  
+            break;
+        default:
+            throw std::runtime_error("Currently, only 6R and 3R Robots are solvable with EAIK.");
+            break;
         }
     }
 

@@ -9,7 +9,7 @@
 namespace IKS
 {
     Spherical_Wrist_Robot::Spherical_Wrist_Robot(const Eigen::Matrix<double, 3, 6> &H, const Eigen::Matrix<double, 3, 7> &P)
-        : General_Robot(H, P)
+        : General_Robot(H,P), H(H), P(P)
     {
     }
 
@@ -230,32 +230,5 @@ namespace IKS
         }
 
         return solution;
-    }
-
-    // Expects Eigen::Matrix<double, 3, N> H axes, Eigen::Matrix<double, 3, N> P offsets and N angles for N joints
-    Homogeneous_T fwd_kinematics_ndof(const Eigen::MatrixXd &H, const Eigen::MatrixXd &P, const std::vector<double> &Q)
-    {
-        // check if H and P are correcly sized
-        const int num_axes = Q.size();
-        if(H.rows() != 3 || H.cols() != num_axes || P.rows() != 3 || P.cols() != num_axes+1)
-        {
-            throw std::runtime_error("fwd_kinematics_ndof was given wrong kinematic model!");
-        }
-
-        Eigen::Vector3d p = P.col(0);
-        Eigen::Matrix3d R = Eigen::Matrix3d::Identity();
-        R.setIdentity();
-
-        for (unsigned int i = 0; i < num_axes; i++)
-        {
-            R = R * Eigen::AngleAxisd(Q.at(i), H.col(i).normalized()).toRotationMatrix();
-            p = p + R * P.col(i + 1);
-        }
-
-        Homogeneous_T result = Homogeneous_T::Identity();
-        result.block<3, 3>(0, 0) = R;
-        result.block<3, 1>(0, 3) = p;
-        result(3, 3) = 1;
-        return result;
     }
 };
