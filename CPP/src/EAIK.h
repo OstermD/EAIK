@@ -16,7 +16,7 @@ namespace EAIK
         IKS::IK_Eigen_Solution calculate_Eigen_IK(const IKS::Homogeneous_T &ee_position_orientation) const;
 
         IKS::Homogeneous_T fwdkin(const std::vector<double> &Q) const;
-        IKS::Homogeneous_T fwdkin(const Eigen::RowVectorXd &Q) const;
+        IKS::Homogeneous_T fwdkin_Eigen(const Eigen::VectorXd &Q) const;
 
         bool is_spherical() const;
     private:

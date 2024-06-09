@@ -12,12 +12,14 @@ namespace IKS
     {
         std::vector<std::vector<double>> Q;
         std::vector<bool> is_LS_vec;
+        unsigned num_solutions() const {return Q.size();}
     };
 
     struct IK_Eigen_Solution
     {
         Eigen::MatrixXd Q;
         Eigen::Array<bool, Eigen::Dynamic, 1> is_LS_vec;
+        unsigned num_solutions() const {return Q.rows();}
     };
 
     class General_Robot

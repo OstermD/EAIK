@@ -107,7 +107,7 @@ bool test_eigen_IO()
 	IKS::Homogeneous_T ee_pose_eigen;
 	Eigen::VectorXd eigen_joint_angles(6);
 	eigen_joint_angles << joint_angles.at(0), joint_angles.at(1), joint_angles.at(2), joint_angles.at(3), joint_angles.at(4), joint_angles.at(5);
-	ee_pose_eigen = puma.fwdkin(eigen_joint_angles);
+	ee_pose_eigen = puma.fwdkin_Eigen(eigen_joint_angles);
 
 	bool is_test_passed = true;
 
@@ -143,7 +143,7 @@ bool test_eigen_IO()
 					is_test_passed = false;
 					break;
 				}
-				else if((puma.fwdkin(eigen_sol.Q.row(i)) - puma.fwdkin(vector_sol.Q.at(i))).norm() > 1e-15)
+				else if((puma.fwdkin_Eigen(eigen_sol.Q.row(i)) - puma.fwdkin(vector_sol.Q.at(i))).norm() > 1e-15)
 				{
 					std::cout<<"Error: Eigen IK solution doesn't correspond to Vector solution! ";
 					is_test_passed = false;

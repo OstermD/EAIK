@@ -4,7 +4,6 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/eigen.h> // Convert numpy <-> Eigen
 #include <pybind11/stl.h>   // Convert python list <-> std::list
-#include <pybind11/numpy.h>
 
 namespace py = pybind11;
 
@@ -23,17 +22,19 @@ PYBIND11_MODULE(canonical_subproblems, m)
                             (3 x n) actuator axes
             -> P          : [p_{O,1} p_{1,2} ... p_{n,T}]
                             (3 x n + 1) actuator displacements
-            -> joint_type : n-vector of joint types
-                            0 - rotational
-                            1 - prismatic
-                            2 - mobile orientation
-                            3 - mobile translation
     */
 
-    py::class_<IKS::IK_Solution>(m, "IKSolution")
+    py::class_<IKS::IK_Eigen_Solution>(m, "IKSolution")
         .def(py::init<>())
-        .def_readwrite("Q", &IKS::IK_Solution::Q)
-        .def_readwrite("is_LS", &IKS::IK_Solution::is_LS_vec);
+        .def_readwrite("Q", &IKS::IK_Eigen_Solution::Q)
+        .def_readwrite("is_LS", &IKS::IK_Eigen_Solution::is_LS_vec)
+        .def("num_solutions", &IKS::IK_Eigen_Solution::num_solutions, R"pbdoc(
+            Returns number of total IK solutions (including Least-Squares)
+            :return:   int
+        )pbdoc")
+        .def("__bool__", [](const IKS::IK_Eigen_Solution &self) {
+        return self.num_solutions() > 0;
+        });
 
     py::class_<EAIK::Robot>(m, "Robot")
         .def(py::init<const Eigen::MatrixXd &, const Eigen::MatrixXd &, bool>())
@@ -44,7 +45,7 @@ PYBIND11_MODULE(canonical_subproblems, m)
             :return:      IK-Solution class
         )pbdoc",
              py::arg("pose"))
-        .def("fwdkin", &EAIK::Robot::fwdkin, R"pbdoc(
+        .def("fwdkin", &EAIK::Robot::fwdkin_Eigen, R"pbdoc(
             Run forward kinematics.
 
             :param Q:  Array of six joint angles

@@ -82,8 +82,8 @@ namespace EAIK
         return original_kinematics->fwdkin(Q);
     }
 
-    // Overloaded function for use with pybindings and the corresponding numpy arrays
-    IKS::Homogeneous_T Robot::fwdkin(const Eigen::RowVectorXd &Q) const
+    // Function for use with pybindings and the corresponding numpy arrays
+    IKS::Homogeneous_T Robot::fwdkin_Eigen(const Eigen::VectorXd &Q) const
     {
         std::vector<double> Q_stdVector(Q.data(), Q.data() + Q.size());
         return original_kinematics->fwdkin(Q_stdVector);
