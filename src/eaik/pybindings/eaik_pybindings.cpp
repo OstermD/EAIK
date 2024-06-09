@@ -4,8 +4,10 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/eigen.h> // Convert numpy <-> Eigen
 #include <pybind11/stl.h>   // Convert python list <-> std::list
+#include <pybind11/numpy.h>
 
 namespace py = pybind11;
+
 
 PYBIND11_MODULE(canonical_subproblems, m)
 {

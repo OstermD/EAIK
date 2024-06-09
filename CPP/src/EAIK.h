@@ -13,7 +13,11 @@ namespace EAIK
     public:
         Robot(const Eigen::MatrixXd &H, const Eigen::MatrixXd &P, bool is_double_precision=true);
         IKS::IK_Solution calculate_IK(const IKS::Homogeneous_T &ee_position_orientation) const;
+        IKS::IK_Eigen_Solution calculate_Eigen_IK(const IKS::Homogeneous_T &ee_position_orientation) const;
+
         IKS::Homogeneous_T fwdkin(const std::vector<double> &Q) const;
+        IKS::Homogeneous_T fwdkin(const Eigen::RowVectorXd &Q) const;
+
         bool is_spherical() const;
     private:
         std::unique_ptr<IKS::General_Robot> bot_kinematics;

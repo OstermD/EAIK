@@ -52,11 +52,43 @@ namespace EAIK
         return bot_kinematics->calculate_IK(ee_position_orientation);
     }    
     
+    // Eigen matrices as solutions for the pybindings
+    IKS::IK_Eigen_Solution Robot::calculate_Eigen_IK(const IKS::Homogeneous_T &ee_position_orientation) const
+    {
+        IKS::IK_Solution vector_solution = bot_kinematics->calculate_IK(ee_position_orientation);
+        IKS::IK_Eigen_Solution eigen_solution;
+
+        if(vector_solution.Q.size() > 0)
+        {
+            eigen_solution.is_LS_vec.resize(vector_solution.is_LS_vec.size());
+
+            // TODO: Find a way to avoid slow loop in future releases
+            for(unsigned i = 0; i < vector_solution.is_LS_vec.size(); ++i)
+            {
+                eigen_solution.is_LS_vec(i) = vector_solution.is_LS_vec.at(i);
+            }
+
+            eigen_solution.Q = Eigen::MatrixXd(vector_solution.Q.size(), vector_solution.Q.at(0).size());
+            for (unsigned i = 0; i < vector_solution.Q.size(); i++)
+            {
+                eigen_solution.Q.row(i) = Eigen::VectorXd::Map(vector_solution.Q.at(i).data(),vector_solution.Q.at(0).size());
+            }
+        }
+        return eigen_solution;                
+    }    
+
     IKS::Homogeneous_T Robot::fwdkin(const std::vector<double> &Q) const
     {
         return original_kinematics->fwdkin(Q);
     }
 
+    // Overloaded function for use with pybindings and the corresponding numpy arrays
+    IKS::Homogeneous_T Robot::fwdkin(const Eigen::RowVectorXd &Q) const
+    {
+        std::vector<double> Q_stdVector(Q.data(), Q.data() + Q.size());
+        return original_kinematics->fwdkin(Q_stdVector);
+    }
+    
     bool Robot::is_spherical() const
     {
         return spherical_wrist;
