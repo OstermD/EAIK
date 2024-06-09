@@ -37,6 +37,11 @@ bool ik_test_3R_1_2_3_parallel_2();
 bool ik_test_3R_1_2_intersecting();
 bool ik_test_3R_2_3_intersecting();
 
+// I/O Component tests
+bool test_eigen_IO();
+
+// Utility-Functions
+
 bool evaluate_test(const std::string &name_test, const EAIK::Robot &robot, const std::vector<IKS::Homogeneous_T> &ee_poses);
 
 // Create a random angle
@@ -74,7 +79,89 @@ int main(int argc, char *argv[])
 	ik_test_3R_1_2_3_intersecting_2();
 	ik_test_3R_1_2_3_parallel();
 	ik_test_3R_1_2_3_parallel_2();
+
+	// I/O Tests
+	test_eigen_IO();
 	return 0;
+}
+
+
+//
+// I/O Component tests
+//
+
+
+// Test Eigen Representation of IK-Solution object
+bool test_eigen_IO()
+{
+	// Puma config
+	Eigen::Matrix<double, 3, 6> puma_H;
+	puma_H << ez, -ey, -ey, ez, ey, ez;
+	Eigen::Matrix<double, 3, 7> puma_P;
+	puma_P << 0.62357 * ez, zv, 0.4318 * ex - 0.16764 * ey, 0.432089 * ez + 0.0381 * ey, zv, zv, 0.05334 * ez;
+
+	EAIK::Robot puma(puma_H, puma_P);
+	std::vector<double> joint_angles{rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle()};
+	IKS::Homogeneous_T ee_pose_vector = puma.fwdkin(joint_angles);
+
+	IKS::Homogeneous_T ee_pose_eigen;
+	Eigen::VectorXd eigen_joint_angles(6);
+	eigen_joint_angles << joint_angles.at(0), joint_angles.at(1), joint_angles.at(2), joint_angles.at(3), joint_angles.at(4), joint_angles.at(5);
+	ee_pose_eigen = puma.fwdkin_Eigen(eigen_joint_angles);
+
+	bool is_test_passed = true;
+
+	std::cout << "\n===== Test [EIGEN-IO]: ";
+
+	if((ee_pose_eigen-ee_pose_vector).norm() > 1e-15)
+	{
+		std::cout<<"Error: Forward kinematics for Eigen and Vector representation are not invariant! ";
+		is_test_passed = false;
+	}
+	else
+	{
+		IKS::IK_Eigen_Solution eigen_sol = puma.calculate_Eigen_IK(ee_pose_eigen);
+		IKS::IK_Solution vector_sol = puma.calculate_IK(ee_pose_vector);
+
+		if(eigen_sol.is_LS_vec.rows() != eigen_sol.Q.rows())
+		{
+			std::cout<<"Error: is_LS_vec's rows don't correspond to Q's rows! ";
+			is_test_passed = false;
+		}
+		else if(eigen_sol.Q.rows() != vector_sol.Q.size())
+		{
+			std::cout<<"Error: Eigen solution set doesn't correspond to Vector solution set! ";
+			is_test_passed = false;
+		}
+		else
+		{
+			for(unsigned i = 0; i < vector_sol.Q.size(); ++i)
+			{
+				if(eigen_sol.is_LS_vec(i) != vector_sol.is_LS_vec.at(i))
+				{
+					std::cout<<"Error: Eigen LS markings don't correspond to Vector LS markings! ";
+					is_test_passed = false;
+					break;
+				}
+				else if((puma.fwdkin_Eigen(eigen_sol.Q.row(i)) - puma.fwdkin(vector_sol.Q.at(i))).norm() > 1e-15)
+				{
+					std::cout<<"Error: Eigen IK solution doesn't correspond to Vector solution! ";
+					is_test_passed = false;
+					break;
+				}
+			}
+		}
+	}
+
+	if(is_test_passed)
+	{
+		std::cout << "[PASS] =====" << std::endl;
+	}else
+	{
+		std::cout << "[FAIL] =====" << std::endl;
+	}
+
+	return is_test_passed;
 }
 
 
@@ -96,7 +183,7 @@ bool ik_test_3R_1_2_Parallel()
 	ee_poses.reserve(BATCH_SIZE);
 	for(unsigned i = 0; i < BATCH_SIZE; i++)
 	{
-		ee_poses.push_back(two_parallel.fwdkin({rand_angle(), rand_angle(), rand_angle()}));
+		ee_poses.push_back(two_parallel.fwdkin(std::vector{rand_angle(), rand_angle(), rand_angle()}));
 
 	}
 
@@ -116,7 +203,7 @@ bool ik_test_3R_2_3_Parallel()
 	ee_poses.reserve(BATCH_SIZE);
 	for(unsigned i = 0; i < BATCH_SIZE; i++)
 	{
-		ee_poses.push_back(two_parallel.fwdkin({rand_angle(), rand_angle(), rand_angle()}));
+		ee_poses.push_back(two_parallel.fwdkin(std::vector{rand_angle(), rand_angle(), rand_angle()}));
 
 	}
 
@@ -137,7 +224,7 @@ bool ik_test_3R_1_2_intersecting_2_3_parallel()
 	ee_poses.reserve(BATCH_SIZE);
 	for (unsigned i = 0; i < BATCH_SIZE; i++)
 	{
-		ee_poses.push_back(_1_2_intersecting_2_3_parallel.fwdkin({rand_angle(), rand_angle(), rand_angle()}));
+		ee_poses.push_back(_1_2_intersecting_2_3_parallel.fwdkin(std::vector{rand_angle(), rand_angle(), rand_angle()}));
 	}
 
 	return evaluate_test("IK 3R - 1,2 intersecting 2,3 parallel", _1_2_intersecting_2_3_parallel, ee_poses);
@@ -156,7 +243,7 @@ bool ik_test_3R_1_2_Parallel_2_3_intersecting()
 	ee_poses.reserve(BATCH_SIZE);
 	for(unsigned i = 0; i < BATCH_SIZE; i++)
 	{
-		ee_poses.push_back(_1_2_parallel_2_3_intersecting.fwdkin({rand_angle(), rand_angle(), rand_angle()}));
+		ee_poses.push_back(_1_2_parallel_2_3_intersecting.fwdkin(std::vector{rand_angle(), rand_angle(), rand_angle()}));
 
 	}
 
@@ -177,7 +264,7 @@ bool ik_test_3R_1_2_3_intersecting()
 	ee_poses.reserve(BATCH_SIZE);
 	for(unsigned i = 0; i < BATCH_SIZE; i++)
 	{
-		ee_poses.push_back(_1_2_3_intersecting.fwdkin({rand_angle(), rand_angle(), rand_angle()}));
+		ee_poses.push_back(_1_2_3_intersecting.fwdkin(std::vector{rand_angle(), rand_angle(), rand_angle()}));
 
 	}
 
@@ -198,7 +285,7 @@ bool ik_test_3R_1_2_3_intersecting_2()
 	ee_poses.reserve(BATCH_SIZE);
 	for(unsigned i = 0; i < BATCH_SIZE; i++)
 	{
-		ee_poses.push_back(_1_2_3_intersecting.fwdkin({rand_angle(), rand_angle(), rand_angle()}));
+		ee_poses.push_back(_1_2_3_intersecting.fwdkin(std::vector{rand_angle(), rand_angle(), rand_angle()}));
 
 	}
 
@@ -220,7 +307,7 @@ bool ik_test_3R_1_2_intersecting_2_3_intersecting()
 	ee_poses.reserve(BATCH_SIZE);
 	for(unsigned i = 0; i < BATCH_SIZE; i++)
 	{
-		ee_poses.push_back(_1_2_intersecting_2_3_intersecting.fwdkin({rand_angle(), rand_angle(), rand_angle()}));
+		ee_poses.push_back(_1_2_intersecting_2_3_intersecting.fwdkin(std::vector{rand_angle(), rand_angle(), rand_angle()}));
 
 	}
 
@@ -241,7 +328,7 @@ bool ik_test_3R_1_2_3_parallel()
 	ee_poses.reserve(BATCH_SIZE);
 	for(unsigned i = 0; i < BATCH_SIZE; i++)
 	{
-		ee_poses.push_back(_1_2_3_parallel.fwdkin({rand_angle(), rand_angle(), rand_angle()}));
+		ee_poses.push_back(_1_2_3_parallel.fwdkin(std::vector{rand_angle(), rand_angle(), rand_angle()}));
 	}
 
 	return evaluate_test("IK 3R - 1,2,3 Parallel", _1_2_3_parallel, ee_poses);
@@ -261,7 +348,7 @@ bool ik_test_3R_1_2_3_parallel_2()
 	ee_poses.reserve(BATCH_SIZE);
 	for(unsigned i = 0; i < BATCH_SIZE; i++)
 	{
-		ee_poses.push_back(_1_2_3_parallel.fwdkin({rand_angle(), rand_angle(), rand_angle()}));
+		ee_poses.push_back(_1_2_3_parallel.fwdkin(std::vector{rand_angle(), rand_angle(), rand_angle()}));
 	}
 
 	return evaluate_test("IK 3R - 1,2,3 Parallel + Offsets", _1_2_3_parallel, ee_poses);
@@ -281,7 +368,7 @@ bool ik_test_3R_1_2_intersecting()
 	ee_poses.reserve(BATCH_SIZE);
 	for (unsigned i = 0; i < BATCH_SIZE; i++)
 	{
-		ee_poses.push_back(_1_2_intersecting.fwdkin({rand_angle(), rand_angle(), rand_angle()}));
+		ee_poses.push_back(_1_2_intersecting.fwdkin(std::vector{rand_angle(), rand_angle(), rand_angle()}));
 	}
 
 	return evaluate_test("IK 3R - 1,2 intersecting", _1_2_intersecting, ee_poses);
@@ -300,7 +387,7 @@ bool ik_test_3R_2_3_intersecting()
 	ee_poses.reserve(BATCH_SIZE);
 	for (unsigned i = 0; i < BATCH_SIZE; i++)
 	{
-		ee_poses.push_back(two_three_intersecting.fwdkin({rand_angle(), rand_angle(), rand_angle()}));
+		ee_poses.push_back(two_three_intersecting.fwdkin(std::vector{rand_angle(), rand_angle(), rand_angle()}));
 	}
 
 	return evaluate_test("IK 3R - 2,3 intersecting", two_three_intersecting, ee_poses);
@@ -320,7 +407,7 @@ bool ik_test_3R_generic()
 	ee_poses.reserve(BATCH_SIZE);
 	for (unsigned i = 0; i < BATCH_SIZE; i++)
 	{
-		ee_poses.push_back(generic.fwdkin({rand_angle(), rand_angle(), rand_angle()}));
+		ee_poses.push_back(generic.fwdkin(std::vector{rand_angle(), rand_angle(), rand_angle()}));
 	}
 
 	return evaluate_test("IK 3R - No Parallel; No Intersecting", generic, ee_poses);
@@ -351,7 +438,7 @@ bool ik_test_UR5()
 	ee_poses.reserve(BATCH_SIZE);
 	for(unsigned i = 0; i < BATCH_SIZE; i++)
 	{
-		ee_poses.push_back(three_parallel.fwdkin({rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle()}));
+		ee_poses.push_back(three_parallel.fwdkin(std::vector{rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle()}));
 
 	}
 
@@ -373,7 +460,7 @@ bool ik_test_3P()
 	ee_poses.reserve(BATCH_SIZE);
 	for(unsigned i = 0; i < BATCH_SIZE; i++)
 	{
-		ee_poses.push_back(three_parallel.fwdkin({rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle()}));
+		ee_poses.push_back(three_parallel.fwdkin(std::vector{rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle()}));
 
 	}
 
@@ -395,7 +482,7 @@ bool ik_test_IRB6640()
 	ee_poses.reserve(BATCH_SIZE);
 	for (unsigned i = 0; i < BATCH_SIZE; i++)
 	{
-		ee_poses.push_back(IRB6640.fwdkin({rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle()}));
+		ee_poses.push_back(IRB6640.fwdkin(std::vector{rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle()}));
 	}
 
 	return evaluate_test("IK spherical wrist - IRB6640", IRB6640, ee_poses);
@@ -415,7 +502,7 @@ bool ik_test_spherical()
 	ee_poses.reserve(BATCH_SIZE);
 	for (unsigned i = 0; i < BATCH_SIZE; i++)
 	{
-		ee_poses.push_back(spherical.fwdkin({rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle()}));
+		ee_poses.push_back(spherical.fwdkin(std::vector{rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle()}));
 	}
 
 	return evaluate_test("IK spherical wrist - spherical", spherical, ee_poses);
@@ -435,7 +522,7 @@ bool ik_test_puma()
 	ee_poses.reserve(BATCH_SIZE);
 	for (unsigned i = 0; i < BATCH_SIZE; i++)
 	{
-		ee_poses.push_back(spherical.fwdkin({rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle()}));
+		ee_poses.push_back(spherical.fwdkin(std::vector{rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle()}));
 	}
 
 	return evaluate_test("IK spherical wrist - puma", spherical, ee_poses);
@@ -461,7 +548,7 @@ bool ik_test_two_Sphericals()
 	ee_poses.reserve(BATCH_SIZE);
 	for(unsigned i = 0; i < BATCH_SIZE; i++)
 	{
-		ee_poses.push_back(bot.fwdkin({rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle()}));
+		ee_poses.push_back(bot.fwdkin(std::vector{rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle()}));
 
 	}
 

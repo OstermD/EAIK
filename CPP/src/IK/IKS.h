@@ -12,9 +12,15 @@ namespace IKS
     {
         std::vector<std::vector<double>> Q;
         std::vector<bool> is_LS_vec;
+        unsigned num_solutions() const {return Q.size();}
     };
 
-    Homogeneous_T fwd_kinematics_ndof(const Eigen::MatrixXd &H, const Eigen::MatrixXd &P, const std::vector<double> &Q);
+    struct IK_Eigen_Solution
+    {
+        Eigen::MatrixXd Q;
+        Eigen::Array<bool, Eigen::Dynamic, 1> is_LS_vec;
+        unsigned num_solutions() const {return Q.rows();}
+    };
 
     class General_Robot
     {

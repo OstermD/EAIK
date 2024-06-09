@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.9)
 project(EAIK_Cpp)
 
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../src/IK build_IK)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/IK build_IK)
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)

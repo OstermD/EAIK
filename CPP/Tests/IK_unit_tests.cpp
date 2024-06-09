@@ -41,6 +41,7 @@ double rand_angle()
 
 int main(int argc, char *argv[])
 {
+	// IK tests
 	ik_test_SPHERICAL_1_2_P();
 	ik_test_SPHERICAL_2_3_P();
 	ik_test_SPHERICAL_1_3_P();
@@ -50,7 +51,7 @@ int main(int argc, char *argv[])
 	ik_test_PUMA();
 	ik_test_3P();
 
-	// Redundancy test my create warning output on std::out
+	// Redundancy test might create warning output on std::out
 	ik_test_SPHERICAL_2_3_P_REDUNDANT();
 
 	return 0;

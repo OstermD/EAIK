@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools", "wheel", "pybind11", "pybind11-stubgen"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "EAIK"
+description = "Toolbox for Efficient Analytical Inverse Kinematics by Subproblem Decomposition."
+readme= "README.md"
+authors = [{ name = "Daniel Ostermeier", email = "daniel.sebastian.ostermeier@tum.de" }]
+license = {file = "LICENSE"}
+classifiers = [
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only"
+]
+keywords = ["Analytical Inverse Kinematic", "Inverse Kinematic", "Robot Kinematic"]
+dependencies = [
+    "numpy >= 1.21.0",
+    "urchin >= 0.0.27",
+    "setuptools",
+    "pybind11 >= 2.10.0",
+    "pybind11-stubgen >= 0.13.0",
+]
+requires-python = ">=3.8"
+version="0.0.2"
+
+[project.urls]
+Homepage = "https://github.com/OstermD/EAIK"
