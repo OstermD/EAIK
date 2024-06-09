@@ -5,10 +5,10 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "EAIK"
 description = "Toolbox for Efficient Analytical Inverse Kinematics by Subproblem Decomposition."
+readme= "README.md"
 authors = [{ name = "Daniel Ostermeier", email = "daniel.sebastian.ostermeier@tum.de" }]
-license = {text = "MIT"}
+license = {file = "LICENSE"}
 classifiers = [
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only"
@@ -22,7 +22,7 @@ dependencies = [
     "pybind11-stubgen >= 0.13.0",
 ]
 requires-python = ">=3.8"
-version="0.0.1"
+version="0.0.2"
 
 [project.urls]
 Homepage = "https://github.com/OstermD/EAIK"

@@ -2,7 +2,7 @@ import numpy as np
 import csv
 import copy
 
-import eaik.cpp.canonical_subproblems as cs
+import eaik.pybindings.canonical_subproblems as cs
 
 
 class Robot:

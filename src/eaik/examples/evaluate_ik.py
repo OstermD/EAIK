@@ -18,6 +18,7 @@ def evaluate_ik(bot, ik_solutions, groundtruth_pose, ee_zero_pose_rotation):
         smallest_ls_solution = None
         for sol in ls_solutions:
             res = bot.fwdKin(sol)
+            is_ls = True
             # Account for init nullposition rotation
             res[:-1, :-1] = res[:-1, :-1].dot(ee_zero_pose_rotation)
             ls_error = np.linalg.norm(res - groundtruth_pose)
@@ -28,7 +29,6 @@ def evaluate_ik(bot, ik_solutions, groundtruth_pose, ee_zero_pose_rotation):
         if smallest_ls_solution is not None:
             if(smallest_ls_error < LS_thershold_error):
                 error_sum += smallest_ls_error
-                is_ls = True
         #else:
             #print("No Solution")
     else:

@@ -1,7 +1,8 @@
 from urchin import URDF
 import numpy as np
-import eaik.cpp.canonical_subproblems as cs
+import eaik.pybindings.canonical_subproblems as cs
 from time import perf_counter_ns
+
 class Robot:
     def __urdf_to_sp_conv(axis_Trafo, axis, parent_p):
         """

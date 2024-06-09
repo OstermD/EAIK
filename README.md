@@ -1,6 +1,6 @@
 # EAIK: A Toolbox for Efficient Analytical Inverse Kinematics by Subproblem Decomposition
 ## Overview
-This code resembles the C++ implementation of the [EAIK Python toolbox](https://pypi.org/project/EAIK/). Please visit our [Website](eaik.cps.cit.tum.de) for further informations.
+This code resembles the C++ implementation of the [EAIK Python toolbox](https://pypi.org/project/EAIK/). Please visit our [Website](https://eaik.cps.cit.tum.de) for further informations.
 
 With this toolbox, we propose a method for automatic inverse kinematic derivation.
 We exploit intersecting and parallel axes to remodel a manipulator's kinematic chain.

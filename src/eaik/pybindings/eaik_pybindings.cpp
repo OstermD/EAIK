@@ -38,7 +38,7 @@ PYBIND11_MODULE(canonical_subproblems, m)
 
     py::class_<EAIK::Robot>(m, "Robot")
         .def(py::init<const Eigen::MatrixXd &, const Eigen::MatrixXd &, bool>())
-        .def("calculate_IK", &EAIK::Robot::calculate_IK, R"pbdoc(
+        .def("calculate_IK", &EAIK::Robot::calculate_Eigen_IK, R"pbdoc(
             Run inverse kinematics.
 
             :param pose:  4x4 Homogeneous transformation matrix

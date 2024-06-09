@@ -8,8 +8,6 @@ def load_test_csv(path):
     Loads test robots from csv
     """
     bot = Robot(path, False)
-    print(bot.hasSphericalWrist())
-
     total_num_ls = 0
     error_sum = 0
     total_num_analytic = 0

@@ -6,13 +6,14 @@ ext_modules = [
     Pybind11Extension(
         "eaik.pybindings.canonical_subproblems",
         sorted(("src/eaik/pybindings/eaik_pybindings.cpp",
+                "CPP/src/IK/utils/kinematic_utils.cpp",
                 "CPP/src/IK/General_IK.cpp",
                 "CPP/src/IK/Spherical_IK.cpp",
                 "CPP/src/IK/3R_IK.cpp",
                 "CPP/src/EAIK.cpp",
                 "CPP/src/utils/kinematic_remodelling.cpp",
                 "CPP/external/ik-geo/cpp/subproblems/sp.cpp")),
-        include_dirs=['CPP/external/ik-geo/cpp/subproblems','CPP/src/IK','CPP/src','CPP/src/utils','/usr/include/eigen3', '/usr/local/include/eigen3']
+        include_dirs=['CPP/external/ik-geo/cpp/subproblems','CPP/src/IK','CPP/src/IK/utils','CPP/src','CPP/src/utils','/usr/include/eigen3', '/usr/local/include/eigen3']
     )
 ]
 
