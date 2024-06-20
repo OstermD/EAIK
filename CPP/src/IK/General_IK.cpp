@@ -62,14 +62,59 @@ namespace IKS
             this->H.col(1).cross(this->H.col(2)).norm() < ZERO_THRESH)
         {
             // h1 || h2 || h3 -> first three axes parallel
-            throw std::runtime_error("This manipulator type (Spherical Wrist + Axis 1,2,3 parallel) is not yet solvable by EAIK.");
+
+            // (h5 x h6)(p56)==0) -> h5 intersects h6
+            // And 5 not parallel to 6 (h5 x h6 =/= 0)
+            if(this->H.col(4).cross(this->H.col(5)).norm() >= ZERO_THRESH && 
+            std::fabs(this->H.col(4).cross(this->H.col(5)).transpose() * this->P.col(5)) < ZERO_THRESH)
+            {
+                const double d = this->H.col(0).transpose()*(p_16 - this->P.col(1) - this->P.col(2) - this->P.col(3));
+                SP4 sp4_t4(this->H.col(0),this->P.col(4), this->H.col(3), d);
+                sp4_t4.solve();
+
+                for(const auto& q4 : sp4_t4.get_theta())
+                {
+                    const Eigen::Matrix3d r_34 = Eigen::AngleAxisd(q4, this->H.col(3).normalized()).toRotationMatrix();
+                    SP4 sp4_t6(this->H.col(4), r_06.transpose()*this->H.col(0), this->H.col(5), this->H.col(5).transpose()*r_34.transpose()*this->H.col(0));
+                    sp4_t6.solve();
+
+                    for(const auto& q6 : sp4_t6.get_theta())
+                    {
+                        const Eigen::Matrix3d r_56 = Eigen::AngleAxisd(q6, this->H.col(5).normalized()).toRotationMatrix();
+                    
+                        SP1 sp1(r_56*r_06.transpose()*this->H.col(0), r_34.transpose()*this->H.col(0), this->H.col(4));
+                        sp1.solve();
+
+                        const Eigen::Matrix3d r_45 = Eigen::AngleAxisd(sp1.get_theta(), this->H.col(4).normalized()).toRotationMatrix();
+                        SP5 sp5(-this->P.col(1), p_16, this->P.col(2), this->P.col(3)+r_34*(this->P.col(4)+r_45*this->P.col(5)), -this->H.col(0), this->H.col(1), this->H.col(2));
+                        sp5.solve();
+
+                        const std::vector<double> theta_1s = sp5.get_theta_1();
+                        const std::vector<double> theta_2s = sp5.get_theta_2();
+                        const std::vector<double> theta_3s = sp5.get_theta_3();
+                        for(unsigned i = 0; i < theta_1s.size(); ++i)
+                        {
+                            const double& q1 = theta_1s.at(i);
+                            const double& q2 = theta_2s.at(i);
+                            const double& q3 = theta_3s.at(i);
+
+                            solution.Q.push_back({q1, q2, q3, q4, sp1.get_theta(), q6});
+                            solution.is_LS_vec.push_back(sp5.solution_is_ls()||sp1.solution_is_ls()||sp4_t4.solution_is_ls()||sp4_t6.solution_is_ls());
+                        }
+                        return solution;
+                    }
+                }
+            }
+            else
+            {
+
+            }
         }
         else if (this->H.col(1).cross(this->H.col(2)).norm() < ZERO_THRESH &&
                  this->H.col(1).cross(this->H.col(3)).norm() < ZERO_THRESH &&
                  this->H.col(2).cross(this->H.col(3)).norm() < ZERO_THRESH)
         {
             // h2 || h3 || h4
-
             std::vector<double> theta_1;
             std::vector<double> theta_5;
             std::vector<bool> is_ls_q1_q5;

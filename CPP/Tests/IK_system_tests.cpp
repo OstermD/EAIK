@@ -19,7 +19,8 @@ const Eigen::Vector3d ez(0, 0, 1);
 bool ik_test_puma();
 bool ik_test_IRB6640();
 bool ik_test_spherical();
-bool ik_test_3P();
+bool ik_test_234_Parallel();
+bool ik_test_123_Parallel()
 bool ik_test_UR5();
 bool ik_test_two_Sphericals();
 
@@ -62,7 +63,7 @@ int main(int argc, char *argv[])
 	ik_test_puma();
 	ik_test_IRB6640();
 	ik_test_spherical();
-	ik_test_3P();
+	ik_test_234_Parallel();
 	ik_test_UR5();
 	ik_test_two_Sphericals();
 
@@ -418,6 +419,32 @@ bool ik_test_3R_generic()
 //
 
 
+// Axis 1, 2, 3, parallel
+bool ik_test_123_Parallel()
+{
+	const Eigen::Vector3d zv(0, 0, 0);
+	const Eigen::Vector3d ex(1, 0, 0);
+	const Eigen::Vector3d ey(0, 1, 0);
+	const Eigen::Vector3d ez(0, 0, 1);
+
+	Eigen::Matrix<double, 3, 6> bot_H;
+	bot_H << ey, ey, ey, ez, ex, ez;
+	Eigen::Matrix<double, 3, 7> bot_P;
+	bot_P << zv, ex, ez-ex, -ex, ez+ey, ex, zv;
+	
+	EAIK::Robot three_parallel(bot_H, bot_P);
+
+	std::vector<IKS::Homogeneous_T> ee_poses;
+	ee_poses.reserve(BATCH_SIZE);
+	for(unsigned i = 0; i < BATCH_SIZE; i++)
+	{
+		ee_poses.push_back(three_parallel.fwdkin(std::vector{rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle()}));
+
+	}
+
+	return evaluate_test("IK three parallel - 1,2,3", three_parallel, ee_poses);
+}
+
 // Axis 2, 3, 4, parallel
 bool ik_test_UR5()
 {
@@ -446,7 +473,7 @@ bool ik_test_UR5()
 }
 
 // Axis 2, 3, 4, parallel
-bool ik_test_3P()
+bool ik_test_234_Parallel()
 {
 	Eigen::Matrix<double, 3, 6> three_parallel_H;
 	three_parallel_H << ez, ex, ex, ex, ez, ex;
