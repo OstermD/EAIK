@@ -5,6 +5,7 @@
 
 #include "sp.h"
 #include "IKS.h"
+#include "utils/kinematic_utils.h"
 
 namespace IKS
 {
@@ -75,7 +76,7 @@ namespace IKS
                 for(const auto& q4 : sp4_t4.get_theta())
                 {
                     const Eigen::Matrix3d r_34 = Eigen::AngleAxisd(q4, this->H.col(3).normalized()).toRotationMatrix();
-                    SP4 sp4_t6(this->H.col(4), r_06.transpose()*this->H.col(0), this->H.col(5), this->H.col(5).transpose()*r_34.transpose()*this->H.col(0));
+                    SP4 sp4_t6(this->H.col(4), r_06.transpose()*this->H.col(0), this->H.col(5), this->H.col(4).transpose()*r_34.transpose()*this->H.col(0));
                     sp4_t6.solve();
 
                     for(const auto& q6 : sp4_t6.get_theta())
@@ -86,28 +87,36 @@ namespace IKS
                         sp1.solve();
 
                         const Eigen::Matrix3d r_45 = Eigen::AngleAxisd(sp1.get_theta(), this->H.col(4).normalized()).toRotationMatrix();
-                        SP5 sp5(-this->P.col(1), p_16, this->P.col(2), this->P.col(3)+r_34*(this->P.col(4)+r_45*this->P.col(5)), -this->H.col(0), this->H.col(1), this->H.col(2));
-                        sp5.solve();
+                        
+                        const Eigen::Vector3d delta = this->P.col(3) + r_34*(this->P.col(4)+r_45*this->P.col(5));
+                        const Eigen::Vector3d hn = create_normal_vector(this->H.col(0));
 
-                        const std::vector<double> theta_1s = sp5.get_theta_1();
-                        const std::vector<double> theta_2s = sp5.get_theta_2();
-                        const std::vector<double> theta_3s = sp5.get_theta_3();
-                        for(unsigned i = 0; i < theta_1s.size(); ++i)
+                        SP1 sp1_t03(r_06*hn, r_34*r_45*r_56*hn, -this->H.col(0));
+                        sp1_t03.solve();
+
+                        const Eigen::Matrix3d r_03 = Eigen::AngleAxisd(sp1_t03.get_theta(), this->H.col(0).normalized()).toRotationMatrix();
+                        SP3 sp3_t2(this->P.col(2), -this->P.col(1), this->H.col(1), (p_16-r_03*delta).norm());
+                        sp3_t2.solve();
+
+                        for(const auto& q2 : sp3_t2.get_theta())
                         {
-                            const double& q1 = theta_1s.at(i);
-                            const double& q2 = theta_2s.at(i);
-                            const double& q3 = theta_3s.at(i);
+                            const Eigen::Matrix3d r_12 = Eigen::AngleAxisd(q2, this->H.col(1).normalized()).toRotationMatrix();
+                            SP1 sp1_t1(this->P.col(1)+r_12*this->P.col(2), r_03*delta-p_16, this->H.col(0));
+                            sp1_t1.solve();
+                            const Eigen::Matrix3d r_01 = Eigen::AngleAxisd(sp1_t1.get_theta(), this->H.col(0).normalized()).toRotationMatrix();
 
-                            solution.Q.push_back({q1, q2, q3, q4, sp1.get_theta(), q6});
-                            solution.is_LS_vec.push_back(sp5.solution_is_ls()||sp1.solution_is_ls()||sp4_t4.solution_is_ls()||sp4_t6.solution_is_ls());
+                            SP1 sp1_t3(hn, r_03.transpose()*r_01*r_12*hn, -this->H.col(2));
+                            sp1_t3.solve();
+
+                            solution.Q.push_back({sp1_t1.get_theta(), q2, sp1_t3.get_theta(), q4, sp1.get_theta(), q6});
+                            solution.is_LS_vec.push_back(sp1_t1.solution_is_ls()||sp3_t2.solution_is_ls()||sp1_t3.solution_is_ls()||sp1.solution_is_ls()||sp4_t4.solution_is_ls()||sp4_t6.solution_is_ls());
                         }
-                        return solution;
                     }
                 }
             }
             else
             {
-
+                throw std::runtime_error("This manipulator type (Axis 1,2,3 parallel) is not yet solvable by EAIK.");
             }
         }
         else if (this->H.col(1).cross(this->H.col(2)).norm() < ZERO_THRESH &&
@@ -215,14 +224,14 @@ namespace IKS
                  this->H.col(3).cross(this->H.col(4)).norm() < ZERO_THRESH)
         {
             // h3 || h4 || h5
-            throw std::runtime_error("This manipulator type (Spherical Wrist + Axis 3,4,5 parallel) is not yet solvable by EAIK.");
+            throw std::runtime_error("This manipulator type (Axis 3,4,5 parallel) is not yet solvable by EAIK.");
         }
         else if (this->H.col(3).cross(this->H.col(4)).norm() < ZERO_THRESH &&
                  this->H.col(3).cross(this->H.col(5)).norm() < ZERO_THRESH &&
                  this->H.col(4).cross(this->H.col(5)).norm() < ZERO_THRESH)
         {
             // h4 || h5 || h6
-            throw std::runtime_error("This manipulator type (Spherical Wrist + Axis 4,5,6 parallel) is not yet solvable by EAIK.");
+            throw std::runtime_error("This manipulator type (Axis 4,5,6 parallel) is not yet solvable by EAIK.");
         }
 
         return solution;

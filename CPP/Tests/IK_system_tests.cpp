@@ -20,7 +20,8 @@ bool ik_test_puma();
 bool ik_test_IRB6640();
 bool ik_test_spherical();
 bool ik_test_234_Parallel();
-bool ik_test_123_Parallel()
+bool ik_test_123_Parallel();
+bool ik_test_123_Parallel_56_Intersecting();
 bool ik_test_UR5();
 bool ik_test_two_Sphericals();
 
@@ -60,10 +61,12 @@ double rand_angle()
 int main(int argc, char *argv[])
 {
 	// 6R Tests
+	/*
 	ik_test_puma();
 	ik_test_IRB6640();
 	ik_test_spherical();
 	ik_test_234_Parallel();
+	ik_test_123_Parallel();
 	ik_test_UR5();
 	ik_test_two_Sphericals();
 
@@ -83,6 +86,10 @@ int main(int argc, char *argv[])
 
 	// I/O Tests
 	test_eigen_IO();
+	*/
+	//ik_test_234_Parallel();
+	//ik_test_123_Parallel();
+	ik_test_123_Parallel_56_Intersecting();
 	return 0;
 }
 
@@ -430,7 +437,7 @@ bool ik_test_123_Parallel()
 	Eigen::Matrix<double, 3, 6> bot_H;
 	bot_H << ey, ey, ey, ez, ex, ez;
 	Eigen::Matrix<double, 3, 7> bot_P;
-	bot_P << zv, ex, ez-ex, -ex, ez+ey, ex, zv;
+	bot_P << zv, ex, ez-ex, -ex, ez+ey, ex+ey, zv;
 	
 	EAIK::Robot three_parallel(bot_H, bot_P);
 
@@ -443,6 +450,38 @@ bool ik_test_123_Parallel()
 	}
 
 	return evaluate_test("IK three parallel - 1,2,3", three_parallel, ee_poses);
+}
+
+// Axis 1, 2, 3, parallel, 5,6 Intersecting
+bool ik_test_123_Parallel_56_Intersecting()
+{
+	const Eigen::Vector3d zv(0, 0, 0);
+	const Eigen::Vector3d ex(1, 0, 0);
+	const Eigen::Vector3d ey(0, 1, 0);
+	const Eigen::Vector3d ez(0, 0, 1);
+
+	Eigen::Matrix<double, 3, 6> bot_H;
+	bot_H << ey, ey, ey, ez, ex, ez;
+	Eigen::Matrix<double, 3, 7> bot_P;
+	bot_P << zv, ex, ez-ex, -ex, ez+ey, ex, zv;
+	
+	EAIK::Robot three_parallel(bot_H, bot_P);
+
+	IKS::Homogeneous_T pose;
+	pose << -0.725348,0.515059  ,  0.456711  ,  0.259055,
+			0.531309 ,-0.00296961 ,   0.847173  ,  0.513673,
+     0.4377  ,   0.85715 ,  -0.271501 ,  -0.858157,
+          0     ,      0     ,      0     ,      1;
+		  /*
+	std::vector<IKS::Homogeneous_T> ee_poses;
+	
+	ee_poses.reserve(BATCH_SIZE);
+	for(unsigned i = 0; i < BATCH_SIZE; i++)
+	{
+		ee_poses.push_back(three_parallel.fwdkin(std::vector{rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle()}));
+	}
+	*/
+	return evaluate_test("IK three parallel - 1,2,3 Parallel - 5,6 Intersecting", three_parallel, {pose});
 }
 
 // Axis 2, 3, 4, parallel
