@@ -8,7 +8,7 @@
 #include "EAIK.h"
 
 #define ERROR_PASS_EPSILON 1e-5
-#define BATCH_SIZE 10
+#define BATCH_SIZE 100
 
 const Eigen::Vector3d zv(0, 0, 0);
 const Eigen::Vector3d ex(1, 0, 0);
@@ -61,12 +61,13 @@ double rand_angle()
 int main(int argc, char *argv[])
 {
 	// 6R Tests
-	/*
+	
 	ik_test_puma();
 	ik_test_IRB6640();
 	ik_test_spherical();
 	ik_test_234_Parallel();
-	ik_test_123_Parallel();
+	//ik_test_123_Parallel();
+	ik_test_123_Parallel_56_Intersecting();
 	ik_test_UR5();
 	ik_test_two_Sphericals();
 
@@ -86,10 +87,7 @@ int main(int argc, char *argv[])
 
 	// I/O Tests
 	test_eigen_IO();
-	*/
-	//ik_test_234_Parallel();
-	//ik_test_123_Parallel();
-	ik_test_123_Parallel_56_Intersecting();
+
 	return 0;
 }
 
@@ -466,22 +464,15 @@ bool ik_test_123_Parallel_56_Intersecting()
 	bot_P << zv, ex, ez-ex, -ex, ez+ey, ex, zv;
 	
 	EAIK::Robot three_parallel(bot_H, bot_P);
-
-	IKS::Homogeneous_T pose;
-	pose << -0.725348,0.515059  ,  0.456711  ,  0.259055,
-			0.531309 ,-0.00296961 ,   0.847173  ,  0.513673,
-     0.4377  ,   0.85715 ,  -0.271501 ,  -0.858157,
-          0     ,      0     ,      0     ,      1;
-		  /*
 	std::vector<IKS::Homogeneous_T> ee_poses;
-	
+
 	ee_poses.reserve(BATCH_SIZE);
 	for(unsigned i = 0; i < BATCH_SIZE; i++)
 	{
-		ee_poses.push_back(three_parallel.fwdkin(std::vector{rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle()}));
+		ee_poses.push_back(three_parallel.fwdkin({rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle()}));
 	}
-	*/
-	return evaluate_test("IK three parallel - 1,2,3 Parallel - 5,6 Intersecting", three_parallel, {pose});
+	
+	return evaluate_test("IK three parallel - 1,2,3 Parallel - 5,6 Intersecting", three_parallel, ee_poses);
 }
 
 // Axis 2, 3, 4, parallel
