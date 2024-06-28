@@ -18,4 +18,13 @@ namespace IKS
 
         return hn.normalized();
     }
+
+    Eigen::Matrix<double, 4, 4> inverse_homogeneous_T(const Eigen::Matrix<double, 4, 4> &trafo)
+    {
+        Eigen::Matrix<double, 4, 4> inverse = Eigen::Matrix<double, 4, 4>::Identity();
+        inverse.block<3, 1>(0, 3) = -trafo.block<3, 3>(0, 0).transpose()*trafo.block<3, 1>(0, 3);
+        inverse.block<3, 3>(0, 0) = trafo.block<3, 3>(0, 0).transpose();
+
+        return inverse;
+    }
 } // namespace IKS
