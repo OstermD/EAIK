@@ -27,4 +27,18 @@ namespace IKS
 
         return inverse;
     }
+
+    // Reverse Kinematic chain: Be careful, angle parametrization reverses too!
+    std::pair<Eigen::MatrixXd, Eigen::MatrixXd> reverse_kinematic_chain(const Eigen::MatrixXd &H, const Eigen::MatrixXd &P)
+    {
+        return {(-H).rowwise().reverse(), (-P).rowwise().reverse()};
+    }
+
+    void reverse_vector_second_dimension(std::vector<std::vector<double>> &vector)
+    {
+        for(auto& inner_v : vector)
+        {
+            std::reverse(inner_v.begin(), inner_v.end());
+        }
+    }
 } // namespace IKS

@@ -19,10 +19,19 @@ const Eigen::Vector3d ez(0, 0, 1);
 bool ik_test_puma();
 bool ik_test_IRB6640();
 bool ik_test_spherical();
+bool ik_test_puma_reversed();
+bool ik_test_spherical_reversed();
+bool ik_test_IRB6640_reversed();
+
 bool ik_test_234_Parallel();
 bool ik_test_123_Parallel();
 bool ik_test_123_Parallel_56_Intersecting();
 bool ik_test_UR5();
+bool ik_test_345_Parallel();
+bool ik_test_456_Parallel();
+bool ik_test_456_Parallel_12_Intersecting();
+bool ik_test_345_Parallel();
+
 bool ik_test_two_Sphericals();
 
 // 3R Tests
@@ -61,15 +70,23 @@ double rand_angle()
 int main(int argc, char *argv[])
 {
 	// 6R Tests
-	
 	ik_test_puma();
 	ik_test_IRB6640();
 	ik_test_spherical();
+	ik_test_puma_reversed();
+	ik_test_spherical_reversed();
+	ik_test_IRB6640_reversed();
+
 	ik_test_234_Parallel();
-	//ik_test_123_Parallel();
+	//ik_test_123_Parallel(); Not yet implemented
 	ik_test_123_Parallel_56_Intersecting();
 	ik_test_UR5();
 	ik_test_two_Sphericals();
+
+	ik_test_345_Parallel();
+	//ik_test_456_Parallel(); Not yet implemented
+	ik_test_456_Parallel_12_Intersecting();
+	ik_test_345_Parallel();
 
 	//// 3R Tests
 	ik_test_3R_1_2_Parallel();
@@ -524,10 +541,146 @@ bool ik_test_234_Parallel()
 	return evaluate_test("IK three parallel - 2,3,4", three_parallel, ee_poses);
 }
 
+// Axis 4, 5, 6, parallel
+bool ik_test_456_Parallel()
+{
+	const Eigen::Vector3d zv(0, 0, 0);
+	const Eigen::Vector3d ex(1, 0, 0);
+	const Eigen::Vector3d ey(0, 1, 0);
+	const Eigen::Vector3d ez(0, 0, 1);
+
+	Eigen::Matrix<double, 3, 6> bot_H;
+	bot_H << ez, ex, ez, ey, ey, ey;//ey, ey, ey, ez, ex, ez;
+	Eigen::Matrix<double, 3, 7> bot_P;
+	bot_P << zv, ex+ey, ez+ey, -ex, ez-ex, ex, zv;//zv, ex, ez-ex, -ex, ez+ey, ex+ey, zv;
+	
+	EAIK::Robot three_parallel(bot_H, bot_P);
+
+	std::vector<IKS::Homogeneous_T> ee_poses;
+	ee_poses.reserve(BATCH_SIZE);
+	for(unsigned i = 0; i < BATCH_SIZE; i++)
+	{
+		ee_poses.push_back(three_parallel.fwdkin(std::vector{rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle()}));
+	}
+
+	return evaluate_test("IK three parallel - 4,5,6", three_parallel, ee_poses);
+}
+
+// Axis 4, 5, 6, parallel, 1,2 Intersecting
+bool ik_test_456_Parallel_12_Intersecting()
+{
+	const Eigen::Vector3d zv(0, 0, 0);
+	const Eigen::Vector3d ex(1, 0, 0);
+	const Eigen::Vector3d ey(0, 1, 0);
+	const Eigen::Vector3d ez(0, 0, 1);
+
+	Eigen::Matrix<double, 3, 6> bot_H;
+	bot_H << ez, ex, ez, ey, ey, ey; //ey, ey, ey, ez, ex, ez;
+	Eigen::Matrix<double, 3, 7> bot_P;
+	bot_P << zv, ex, ez+ey, -ex, ez-ex, ex, zv; //zv, ex, ez-ex, -ex, ez+ey, ex, zv;
+	
+	EAIK::Robot three_parallel(bot_H, bot_P);
+	std::vector<IKS::Homogeneous_T> ee_poses;
+
+	ee_poses.reserve(BATCH_SIZE);
+	for(unsigned i = 0; i < BATCH_SIZE; i++)
+	{
+		ee_poses.push_back(three_parallel.fwdkin({rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle()}));
+	}
+	
+	return evaluate_test("IK three parallel - 4,5,6 Parallel - 1,2 Intersecting", three_parallel, ee_poses);
+}
+
+// Axis 3, 4, 5, parallel
+bool ik_test_345_Parallel()
+{
+	Eigen::Matrix<double, 3, 6> three_parallel_H;
+	three_parallel_H <<  ex, ez, ex, ex, ex, ez; //ez, ex, ex, ex, ez, ex;
+	Eigen::Matrix<double, 3, 7> three_parallel_P;
+	three_parallel_P <<  ex, ex+ey, ey, ey, ey, ey, ez;//ez, ey, ey, ey, ey, ey + ex, ex;
+
+	EAIK::Robot three_parallel(three_parallel_H, three_parallel_P);
+
+	
+	std::vector<IKS::Homogeneous_T> ee_poses;
+	ee_poses.reserve(BATCH_SIZE);
+	for(unsigned i = 0; i < BATCH_SIZE; i++)
+	{
+		ee_poses.push_back(three_parallel.fwdkin(std::vector{rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle()}));
+
+	}
+
+	return evaluate_test("IK three parallel - 3,4,5", three_parallel, ee_poses);
+}
+
+// spherical wrist at the bottom, intersecting axes 5,6, parallel 4,5, intersecting 3,4
+bool ik_test_IRB6640_reversed()
+{
+	// Robot configuration for spherical wris
+	Eigen::Matrix<double, 3, 6> IRB6640_H;
+	IRB6640_H << ex, ey, ex, ey, ey, ez;
+	Eigen::Matrix<double, 3, 7> IRB6640_P;
+	IRB6640_P << zv, 0.2*ex, zv, zv,  1.1425 * ex + 0.2 * ez,1.075 * ez,0.32 * ex + 0.78 * ez;
+
+	EAIK::Robot IRB6640(IRB6640_H, IRB6640_P);
+
+	std::vector<IKS::Homogeneous_T> ee_poses;
+	ee_poses.reserve(BATCH_SIZE);
+	for (unsigned i = 0; i < BATCH_SIZE; i++)
+	{
+		ee_poses.push_back(IRB6640.fwdkin(std::vector{rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle()}));
+	}
+
+	return evaluate_test("IK spherical wrist - IRB6640 reversed", IRB6640, ee_poses);
+}
+
+// Spherical wrist at the bottom - no other intersecting/parallel consecutive axes
+bool ik_test_spherical_reversed()
+{
+	// Robot configuration for spherical wrist with
+	Eigen::Matrix<double, 3, 6> H;
+	H << ex, ey, ex, ey, ez, ey;// ey, ez, ey, ex, ey, ex;
+	Eigen::Matrix<double, 3, 7> P;
+	P << zv, ex, zv, ex+ez, ex+ez, ex+ez, zv;//zv, ex + ez, ex + ez, ex + ez, zv, ex, zv;
+
+	EAIK::Robot spherical(H, P);
+
+	std::vector<IKS::Homogeneous_T> ee_poses;
+	ee_poses.reserve(BATCH_SIZE);
+	for (unsigned i = 0; i < BATCH_SIZE; i++)
+	{
+		ee_poses.push_back(spherical.fwdkin(std::vector{rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle()}));
+	}
+
+	return evaluate_test("IK spherical wrist - spherical reversed", spherical, ee_poses);
+}
+
+// Puma kinematic but with the wrist at the bottom
+bool ik_test_puma_reversed()
+{
+	// Robot configuration for spherical wrist with second and third axis intersecting
+	Eigen::Matrix<double, 3, 6> H;
+	H << ez, -ey, ez, -ey, -ey, ez; //ez, -ey, -ey, ez, -ey, ez;
+	Eigen::Matrix<double, 3, 7> P;
+	P << zv, 0.05334 * ez, 0.080299 * ez, 0.0381 * ey + 0.3517 * ez, 0.4318 * ex - 0.0254 * ey, -0.14224 * ey + 0.07493 * ez,0.54864 * ez;
+	//0.54864 * ez, -0.14224 * ey + 0.07493 * ez, 0.4318 * ex - 0.0254 * ey, 0.0381 * ey + 0.3517 * ez, 0.080299 * ez, 0.05334 * ez, zv;
+
+	EAIK::Robot spherical(H, P);
+	
+	std::vector<IKS::Homogeneous_T> ee_poses;
+	ee_poses.reserve(BATCH_SIZE);
+	for (unsigned i = 0; i < BATCH_SIZE; i++)
+	{
+		ee_poses.push_back(spherical.fwdkin(std::vector{rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle()}));
+	}
+
+	return evaluate_test("IK spherical wrist - puma reversed", spherical, ee_poses);
+}
+
 // spherical wrist, intersecting axes 1,2, parallel 2,3, intersecting 3,4
 bool ik_test_IRB6640()
 {
-	// Robot configuration for spherical wrist with second and third axis intersecting
+	// Robot configuration for spherical wris
 	Eigen::Matrix<double, 3, 6> IRB6640_H;
 	IRB6640_H << ez, ey, ey, ex, ey, ex;
 	Eigen::Matrix<double, 3, 7> IRB6640_P;
@@ -547,7 +700,7 @@ bool ik_test_IRB6640()
 
 bool ik_test_spherical()
 {
-	// Robot configuration for spherical wrist with second and third axis intersecting
+	// Robot configuration for spherical wrist with
 	Eigen::Matrix<double, 3, 6> H;
 	H << ey, ez, ey, ex, ey, ex;
 	Eigen::Matrix<double, 3, 7> P;

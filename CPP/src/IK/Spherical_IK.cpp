@@ -5,20 +5,33 @@
 
 #include "sp.h"
 #include "IKS.h"
+#include "utils/kinematic_utils.h"
 
 namespace IKS
 {
-    Spherical_Wrist_Robot::Spherical_Wrist_Robot(const Eigen::Matrix<double, 3, 6> &H, const Eigen::Matrix<double, 3, 7> &P)
-        : General_Robot(H,P), H(H), P(P)
+    Spherical_Wrist_Robot::Spherical_Wrist_Robot(const Eigen::Matrix<double, 3, 6> &H, const Eigen::Matrix<double, 3, 7> &P, const bool use_inverted_chain)
+        : General_Robot(H,P), H(H), P(P), use_inverted_chain(use_inverted_chain)
     {
     }
 
     IK_Solution Spherical_Wrist_Robot::calculate_IK(const Homogeneous_T &ee_position_orientation) const
     {
+        // Distinguish if wrist is located at bottom of the robot - in this case H and P are the inverted chain and we need to invert the EE pose
+        Homogeneous_T ee_pose_adapted;
+        if(use_inverted_chain)
+        {
+            ee_pose_adapted = inverse_homogeneous_T(ee_position_orientation);
+        }
+        else
+        {
+            ee_pose_adapted = ee_position_orientation;
+        }
+
         IK_Solution solution;
-        const Eigen::Vector3d p_0t = ee_position_orientation.block<3, 1>(0, 3);
-        const Eigen::Matrix3d r_06 = ee_position_orientation.block<3, 3>(0, 0);
+        const Eigen::Vector3d p_0t = ee_pose_adapted.block<3, 1>(0, 3);
+        const Eigen::Matrix3d r_06 = ee_pose_adapted.block<3, 3>(0, 0);
         const Eigen::Vector3d p_16 = p_0t - this->P.col(0) - r_06 * this->P.col(6);
+
 
         // Calculate "Position-IK":
         std::vector<std::vector<double>> position_solutions;
@@ -227,6 +240,11 @@ namespace IKS
                 solution.Q.push_back({q1, q2, q3, sp1_q4.get_theta(), q5, sp1_q6.get_theta()});
                 solution.is_LS_vec.push_back(position_solution_is_LS.at(i) || sp4.solution_is_ls() || sp1_q4.solution_is_ls() || sp1_q6.solution_is_ls());
             }
+        }
+
+        if(use_inverted_chain)
+        {
+            reverse_vector_second_dimension(solution.Q);
         }
 
         return solution;

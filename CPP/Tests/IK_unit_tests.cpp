@@ -6,7 +6,6 @@
 #include <vector>
 
 #include "IKS.h"
-#include "kinematic_remodelling.h"
 #include "kinematic_utils.h"
 
 #define ERROR_PASS_EPSILON 1e-6
@@ -81,7 +80,7 @@ bool test_inv_kin_chain()
 	IKS::Spherical_Wrist_Robot puma(puma_H, puma_P);
 
 	// Build kinematically reversed robot
-	const auto&[H_reversed, P_reversed] = EAIK::reverse_kinematic_chain(puma_H, puma_P);
+	const auto&[H_reversed, P_reversed] = IKS::reverse_kinematic_chain(puma_H, puma_P);
 	IKS::Spherical_Wrist_Robot puma_reversed(H_reversed, P_reversed);
 
 	bool is_Pass = true;

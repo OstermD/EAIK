@@ -119,7 +119,7 @@ namespace IKS
             }
             else
             {
-                throw std::runtime_error("This manipulator type (Axis 1,2,3 parallel with no additional intersecting/parallel axes) is not yet solvable by EAIK.");
+                throw std::runtime_error("This manipulator type (Axis 1,2,3 parallel with no additional parallel axes) is not yet solvable by EAIK.");
             }
         }
         else if (this->H.col(1).cross(this->H.col(2)).norm() < ZERO_THRESH &&
@@ -227,14 +227,25 @@ namespace IKS
                  this->H.col(3).cross(this->H.col(4)).norm() < ZERO_THRESH)
         {
             // h3 || h4 || h5
-            throw std::runtime_error("This manipulator type (Axis 3,4,5 parallel) is not yet solvable by EAIK.");
+            // Reverse kinematic chain and calculate IK for robot with h2 || h3 || h4
+            const auto&[H_reversed, P_reversed] = reverse_kinematic_chain(this->H, this->P);
+            General_6R reversed_robot (H_reversed, P_reversed);
+
+            solution = reversed_robot.calculate_IK(inverse_homogeneous_T(ee_position_orientation));
+
+            reverse_vector_second_dimension(solution.Q);
         }
         else if (this->H.col(3).cross(this->H.col(4)).norm() < ZERO_THRESH &&
                  this->H.col(3).cross(this->H.col(5)).norm() < ZERO_THRESH &&
                  this->H.col(4).cross(this->H.col(5)).norm() < ZERO_THRESH)
         {
             // h4 || h5 || h6
-            throw std::runtime_error("This manipulator type (Axis 4,5,6 parallel) is not yet solvable by EAIK.");
+            // Reverse kinematic chain and calculate IK for robot with h1 || h2 || h3
+            const auto&[H_reversed, P_reversed] = reverse_kinematic_chain(this->H, this->P);
+            General_6R reversed_robot (H_reversed, P_reversed);
+
+            solution = reversed_robot.calculate_IK(inverse_homogeneous_T(ee_position_orientation));
+            reverse_vector_second_dimension(solution.Q);
         }
 
         return solution;

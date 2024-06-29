@@ -132,9 +132,4 @@ namespace EAIK
 
         return P_new;
     }
-
-    std::pair<Eigen::MatrixXd, Eigen::MatrixXd> reverse_kinematic_chain(const Eigen::MatrixXd &H, const Eigen::MatrixXd &P)
-    {
-        return {(-H).rowwise().reverse(), (-P).rowwise().reverse()};
-    }
 } // namespace EAIK
