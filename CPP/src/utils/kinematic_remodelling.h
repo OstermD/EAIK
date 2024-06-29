@@ -5,6 +5,7 @@
 #include <vector>
 #include <iostream>
 #include <math.h>
+#include <tuple>
 
 namespace EAIK
 {

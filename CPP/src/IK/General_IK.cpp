@@ -5,6 +5,7 @@
 
 #include "sp.h"
 #include "IKS.h"
+#include "utils/kinematic_utils.h"
 
 namespace IKS
 {
@@ -48,7 +49,7 @@ namespace IKS
     IK_Solution General_6R::calculate_IK(const Homogeneous_T &ee_position_orientation) const
     {
         IK_Solution solution;
-        
+
         const Eigen::Vector3d p_0t = ee_position_orientation.block<3, 1>(0, 3);
         const Eigen::Matrix3d r_06 = ee_position_orientation.block<3, 3>(0, 0);
         const Eigen::Vector3d p_16 = p_0t - this->P.col(0) - r_06 * this->P.col(6);
@@ -62,14 +63,70 @@ namespace IKS
             this->H.col(1).cross(this->H.col(2)).norm() < ZERO_THRESH)
         {
             // h1 || h2 || h3 -> first three axes parallel
-            throw std::runtime_error("This manipulator type (Spherical Wrist + Axis 1,2,3 parallel) is not yet solvable by EAIK.");
+
+            // (h5 x h6)(p56)==0) -> h5 intersects h6
+            // And 5 not parallel to 6 (h5 x h6 =/= 0)
+            if(this->H.col(4).cross(this->H.col(5)).norm() >= ZERO_THRESH && 
+            std::fabs(this->H.col(4).cross(this->H.col(5)).transpose() * this->P.col(5)) < ZERO_THRESH)
+            {
+                const double d = this->H.col(0).transpose()*(p_16 - this->P.col(1) - this->P.col(2) - this->P.col(3));
+                SP4 sp4_t4(this->H.col(0),this->P.col(4), this->H.col(3), d);
+                sp4_t4.solve();
+
+                for(const auto& q4 : sp4_t4.get_theta())
+                {
+                    const Eigen::Matrix3d r_34 = Eigen::AngleAxisd(q4, this->H.col(3).normalized()).toRotationMatrix();
+                    SP4 sp4_t6(this->H.col(4), r_06.transpose()*this->H.col(0), this->H.col(5), this->H.col(4).transpose()*r_34.transpose()*this->H.col(0));
+                    sp4_t6.solve();
+
+                    for(const auto& q6 : sp4_t6.get_theta())
+                    {
+                        const Eigen::Matrix3d r_56 = Eigen::AngleAxisd(q6, this->H.col(5).normalized()).toRotationMatrix();
+                    
+                        SP4 sp4_t03(this->H.col(3), r_06*r_56.transpose()*this->H.col(4), -this->H.col(0), this->H.col(3).transpose()*this->H.col(4));
+                        sp4_t03.solve();
+
+                        for(const auto& q03 : sp4_t03.get_theta())
+                        {
+                            const Eigen::Matrix3d r_03 = Eigen::AngleAxisd(q03, this->H.col(0).normalized()).toRotationMatrix();
+                            const Eigen::Vector3d hn = create_normal_vector(this->H.col(4));
+
+                            SP1 sp1_t5(r_56*hn, r_34.transpose()*r_03.transpose()*r_06*hn, this->H.col(4));
+                            sp1_t5.solve();
+                            
+                            const Eigen::Vector3d delta = this->P.col(3) + r_34*this->P.col(4);
+
+                            SP3 sp3_t2(this->P.col(2), -this->P.col(1), this->H.col(1), (p_16-r_03*delta).norm());
+                            sp3_t2.solve();
+
+                            for(const auto& q2 : sp3_t2.get_theta())
+                            {
+                                const Eigen::Matrix3d r_12 = Eigen::AngleAxisd(q2, this->H.col(1).normalized()).toRotationMatrix();
+                                SP1 sp1_t1(this->P.col(1)+r_12*this->P.col(2), p_16-r_03*delta, this->H.col(0));
+                                sp1_t1.solve();
+                                const Eigen::Matrix3d r_01 = Eigen::AngleAxisd(sp1_t1.get_theta(), this->H.col(0).normalized()).toRotationMatrix();
+                                
+                                const Eigen::Vector3d hn_3 = create_normal_vector(this->H.col(2));
+                                SP1 sp1_t3(hn_3, r_12.transpose()*r_01.transpose()*r_03*hn_3, this->H.col(2));
+                                sp1_t3.solve();
+
+                                solution.Q.push_back({sp1_t1.get_theta(), q2, sp1_t3.get_theta(), q4, sp1_t5.get_theta(), q6});
+                                solution.is_LS_vec.push_back(sp1_t1.solution_is_ls() || sp3_t2.solution_is_ls() || sp1_t3.solution_is_ls() || sp4_t4.solution_is_ls() || sp1_t5.solution_is_ls() || sp4_t6.solution_is_ls());
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                throw std::runtime_error("This manipulator type (Axis 1,2,3 parallel with no additional parallel axes) is not yet solvable by EAIK.");
+            }
         }
         else if (this->H.col(1).cross(this->H.col(2)).norm() < ZERO_THRESH &&
                  this->H.col(1).cross(this->H.col(3)).norm() < ZERO_THRESH &&
                  this->H.col(2).cross(this->H.col(3)).norm() < ZERO_THRESH)
         {
             // h2 || h3 || h4
-
             std::vector<double> theta_1;
             std::vector<double> theta_5;
             std::vector<bool> is_ls_q1_q5;
@@ -170,14 +227,25 @@ namespace IKS
                  this->H.col(3).cross(this->H.col(4)).norm() < ZERO_THRESH)
         {
             // h3 || h4 || h5
-            throw std::runtime_error("This manipulator type (Spherical Wrist + Axis 3,4,5 parallel) is not yet solvable by EAIK.");
+            // Reverse kinematic chain and calculate IK for robot with h2 || h3 || h4
+            const auto&[H_reversed, P_reversed] = reverse_kinematic_chain(this->H, this->P);
+            General_6R reversed_robot (H_reversed, P_reversed);
+
+            solution = reversed_robot.calculate_IK(inverse_homogeneous_T(ee_position_orientation));
+
+            reverse_vector_second_dimension(solution.Q);
         }
         else if (this->H.col(3).cross(this->H.col(4)).norm() < ZERO_THRESH &&
                  this->H.col(3).cross(this->H.col(5)).norm() < ZERO_THRESH &&
                  this->H.col(4).cross(this->H.col(5)).norm() < ZERO_THRESH)
         {
             // h4 || h5 || h6
-            throw std::runtime_error("This manipulator type (Spherical Wrist + Axis 4,5,6 parallel) is not yet solvable by EAIK.");
+            // Reverse kinematic chain and calculate IK for robot with h1 || h2 || h3
+            const auto&[H_reversed, P_reversed] = reverse_kinematic_chain(this->H, this->P);
+            General_6R reversed_robot (H_reversed, P_reversed);
+
+            solution = reversed_robot.calculate_IK(inverse_homogeneous_T(ee_position_orientation));
+            reverse_vector_second_dimension(solution.Q);
         }
 
         return solution;

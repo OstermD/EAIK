@@ -13,8 +13,8 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 find_package (Eigen3 REQUIRED)
 
-add_executable(Unit_Tests IK_unit_tests.cpp)
-target_include_directories(Unit_Tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../src/IK)
+add_executable(Unit_Tests IK_unit_tests.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../src/utils/kinematic_remodelling.cpp)
+target_include_directories(Unit_Tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../src/IK ${CMAKE_CURRENT_SOURCE_DIR}/../src/IK/utils ${CMAKE_CURRENT_SOURCE_DIR}/../src/utils)
 target_link_libraries(Unit_Tests EAIK_Kinematics)
 target_link_libraries(Unit_Tests Eigen3::Eigen)
 

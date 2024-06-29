@@ -12,14 +12,14 @@ namespace IKS
     {
         std::vector<std::vector<double>> Q;
         std::vector<bool> is_LS_vec;
-        unsigned num_solutions() const {return Q.size();}
+        unsigned num_solutions() const { return Q.size(); }
     };
 
     struct IK_Eigen_Solution
     {
         Eigen::MatrixXd Q;
         Eigen::Array<bool, Eigen::Dynamic, 1> is_LS_vec;
-        unsigned num_solutions() const {return Q.rows();}
+        unsigned num_solutions() const { return Q.rows(); }
     };
 
     class General_Robot
@@ -30,7 +30,7 @@ namespace IKS
         virtual IK_Solution calculate_IK(const Homogeneous_T &ee_position_orientation) const = 0;
         virtual Homogeneous_T fwdkin(const std::vector<double> &Q) const final;
 
-    protected:
+    private:
         Eigen::MatrixXd H;
         Eigen::MatrixXd P;
     };
@@ -63,12 +63,14 @@ namespace IKS
     {
         // 6DOF Robot kinematics with spherical wrist (3 consecutive intersecting axes at the endeffector)
     public:
-        Spherical_Wrist_Robot(const Eigen::Matrix<double, 3, 6> &H, const Eigen::Matrix<double, 3, 7> &P);
+        Spherical_Wrist_Robot(const Eigen::Matrix<double, 3, 6> &H, const Eigen::Matrix<double, 3, 7> &P, const bool use_inverted_chain=false);
         IK_Solution calculate_IK(const Homogeneous_T &ee_position_orientation) const override;
 
     private:
         Eigen::Matrix<double, 3, 6> H;
         Eigen::Matrix<double, 3, 7> P;
+
+        bool use_inverted_chain;
     };
 }
 

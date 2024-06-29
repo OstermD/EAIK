@@ -6,9 +6,15 @@
 #include <vector>
 
 #include "IKS.h"
+#include "kinematic_utils.h"
 
 #define ERROR_PASS_EPSILON 1e-6
 #define BATCH_SIZE 100
+
+const Eigen::Vector3d zv(0, 0, 0);
+const Eigen::Vector3d ex(1, 0, 0);
+const Eigen::Vector3d ey(0, 1, 0);
+const Eigen::Vector3d ez(0, 0, 1);
 
 // Spherical wrist
 bool ik_test_SPHERICAL_1_2_P();
@@ -19,6 +25,8 @@ bool ik_test_SPHERICAL_1_2_I();
 bool ik_test_SPHERICAL_2_3_I();
 bool ik_test_PUMA();
 bool ik_test_SPHERICAL_2_3_P_REDUNDANT();
+
+bool test_inv_kin_chain();
 
 // No spherical wrist
 bool ik_test_3P();
@@ -41,6 +49,8 @@ double rand_angle()
 
 int main(int argc, char *argv[])
 {
+	test_inv_kin_chain();
+	
 	// IK tests
 	ik_test_SPHERICAL_1_2_P();
 	ik_test_SPHERICAL_2_3_P();
@@ -53,18 +63,56 @@ int main(int argc, char *argv[])
 
 	// Redundancy test might create warning output on std::out
 	ik_test_SPHERICAL_2_3_P_REDUNDANT();
-
+	
 	return 0;
+}
+
+
+// Test kinematic chain inversion
+bool test_inv_kin_chain()
+{
+	// Puma config
+	Eigen::Matrix<double, 3, 6> puma_H;
+	puma_H << ez, -ey, -ey, ez, ey, ez;
+	Eigen::Matrix<double, 3, 7> puma_P;
+	puma_P << 0.62357 * ez, zv, 0.4318 * ex - 0.16764 * ey, 0.432089 * ez + 0.0381 * ey, zv, zv, 0.05334 * ez;
+
+	IKS::Spherical_Wrist_Robot puma(puma_H, puma_P);
+
+	// Build kinematically reversed robot
+	const auto&[H_reversed, P_reversed] = IKS::reverse_kinematic_chain(puma_H, puma_P);
+	IKS::Spherical_Wrist_Robot puma_reversed(H_reversed, P_reversed);
+
+	bool is_Pass = true;
+	for(unsigned i = 0; i < BATCH_SIZE; ++i)
+	{
+		std::vector<double> joint_angles{rand_angle(), rand_angle(),rand_angle(),rand_angle(),rand_angle(),rand_angle()};
+
+		IKS::Homogeneous_T original = puma.fwdkin(joint_angles);
+
+		// Remember to reverse order of joint angles
+		std::reverse(joint_angles.begin(), joint_angles.end());
+		IKS::Homogeneous_T inverted = puma_reversed.fwdkin(joint_angles);
+
+		is_Pass &= (IKS::inverse_homogeneous_T(original)-inverted).isZero();
+	}	
+
+	std::cout << "\n===== Test [Kinematic Inversion]: ";
+	if (is_Pass)
+	{
+		std::cout << "[PASS] =====" << std::endl;
+	}
+	else
+	{
+		std::cout << "[FAIL] =====" << std::endl;
+	}
+
+	return is_Pass;
 }
 
 // Axis 2, 3, 4, parallel
 bool ik_test_3P()
 {
-	const Eigen::Vector3d zv(0, 0, 0);
-	const Eigen::Vector3d ex(1, 0, 0);
-	const Eigen::Vector3d ey(0, 1, 0);
-	const Eigen::Vector3d ez(0, 0, 1);
-
 	// Robot configuration for spherical wrist with second and third axis intersecting
 	Eigen::Matrix<double, 3, 6> three_parallel_H;
 	three_parallel_H << ez, ex, ex, ex, ez, ex;
@@ -88,11 +136,6 @@ bool ik_test_3P()
 // spherical wrist, intersecting axes 1,2, parallel 2,3, intersecting 3,4
 bool ik_test_PUMA()
 {
-	const Eigen::Vector3d zv(0, 0, 0);
-	const Eigen::Vector3d ex(1, 0, 0);
-	const Eigen::Vector3d ey(0, 1, 0);
-	const Eigen::Vector3d ez(0, 0, 1);
-
 	// Robot configuration for spherical wrist with second and third axis intersecting
 	Eigen::Matrix<double, 3, 6> puma_H;
 	puma_H << ez, -ey, -ey, ez, ey, ez;
@@ -114,11 +157,6 @@ bool ik_test_PUMA()
 // spherical wrist, with the remaining second and third axis intersecting
 bool ik_test_SPHERICAL_2_3_I()
 {
-	const Eigen::Vector3d zv(0, 0, 0);
-	const Eigen::Vector3d ex(1, 0, 0);
-	const Eigen::Vector3d ey(0, 1, 0);
-	const Eigen::Vector3d ez(0, 0, 1);
-
 	// Robot configuration for spherical wrist with second and third axis intersecting
 	Eigen::Matrix<double, 3, 6> spherical_intersecting_H;
 	spherical_intersecting_H << ex, ez, ey, ez, ex, ey;
@@ -139,11 +177,6 @@ bool ik_test_SPHERICAL_2_3_I()
 // spherical wrist, with the remaining first and second axis intersecting
 bool ik_test_SPHERICAL_1_2_I()
 {
-	const Eigen::Vector3d zv(0, 0, 0);
-	const Eigen::Vector3d ex(1, 0, 0);
-	const Eigen::Vector3d ey(0, 1, 0);
-	const Eigen::Vector3d ez(0, 0, 1);
-
 	// Robot configuration for spherical wrist with first and second axis intersecting
 	Eigen::Matrix<double, 3, 6> spherical_intersecting_H;
 	spherical_intersecting_H << ez, ey, ex, ez, ex, ey;
@@ -170,11 +203,6 @@ bool ik_test_SPHERICAL_1_2_I()
 // spherical wrist, with the remaining first and third axis parallel (Solvable by SP5)
 bool ik_test_SPHERICAL_1_3_P()
 {
-	const Eigen::Vector3d zv(0, 0, 0);
-	const Eigen::Vector3d ex(1, 0, 0);
-	const Eigen::Vector3d ey(0, 1, 0);
-	const Eigen::Vector3d ez(0, 0, 1);
-
 	// Using modified version of Irb6640
 	Eigen::Matrix<double, 3, 6> spherical_1_3_H;
 	spherical_1_3_H << ey, ez, ey, ez, ex, ey;
@@ -195,11 +223,6 @@ bool ik_test_SPHERICAL_1_3_P()
 // spherical wrist, with the remaining first and second axis parallel
 bool ik_test_SPHERICAL_1_2_P()
 {
-	const Eigen::Vector3d zv(0, 0, 0);
-	const Eigen::Vector3d ex(1, 0, 0);
-	const Eigen::Vector3d ey(0, 1, 0);
-	const Eigen::Vector3d ez(0, 0, 1);
-
 	// Using modified version of Irb6640 where first axis switches place with second and third
 	Eigen::Matrix<double, 3, 6> Irb6640_mod_H;
 	Irb6640_mod_H << ey, ey, ez, ex, ey, ex;
@@ -221,11 +244,6 @@ bool ik_test_SPHERICAL_1_2_P()
 // In addition, the third axis is inherently redundant for this configuration
 bool ik_test_SPHERICAL_2_3_P_REDUNDANT()
 {
-	const Eigen::Vector3d zv(0, 0, 0);
-	const Eigen::Vector3d ex(1, 0, 0);
-	const Eigen::Vector3d ey(0, 1, 0);
-	const Eigen::Vector3d ez(0, 0, 1);
-
 	Eigen::Matrix<double, 3, 6> bot_1_H;
 	bot_1_H << -ey, -ez, -ez, -ey, -ez, -ey;
 	Eigen::Matrix<double, 3, 7> bot_1_P;
@@ -245,11 +263,6 @@ bool ik_test_SPHERICAL_2_3_P_REDUNDANT()
 // spherical wrist, with the remaining second and third axis parallel
 bool ik_test_SPHERICAL_2_3_P()
 {
-	const Eigen::Vector3d zv(0, 0, 0);
-	const Eigen::Vector3d ex(1, 0, 0);
-	const Eigen::Vector3d ey(0, 1, 0);
-	const Eigen::Vector3d ez(0, 0, 1);
-
 	Eigen::Matrix<double, 3, 6> Irb6640_H;
 	Irb6640_H << ez, ey, ey, ex, ey, ex;
 	Eigen::Matrix<double, 3, 7> Irb6640_P;
@@ -281,11 +294,6 @@ bool ik_test_SPHERICAL_2_3_P()
 
 bool ik_test_SPHERICAL()
 {
-	const Eigen::Vector3d zv(0, 0, 0);
-	const Eigen::Vector3d ex(1, 0, 0);
-	const Eigen::Vector3d ey(0, 1, 0);
-	const Eigen::Vector3d ez(0, 0, 1);
-
 	Eigen::Matrix<double, 3, 6> Spherical_Bot_H;
 	Spherical_Bot_H << ey, ez, ey, ex, ey, ex;
 	Eigen::Matrix<double, 3, 7> Spherical_Bot_P;

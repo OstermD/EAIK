@@ -2,6 +2,7 @@
 #include <eigen3/Eigen/Dense>
 
 #include "kinematic_remodelling.h"
+#include "kinematic_utils.h"
 #include "EAIK.h"
 
 namespace EAIK
@@ -30,7 +31,15 @@ namespace EAIK
                 bot_kinematics = std::make_unique<IKS::Spherical_Wrist_Robot>(H, P_new);
                 original_kinematics = std::make_unique<IKS::Spherical_Wrist_Robot>(H, P);
             }
-            else
+            else if(P_new.col(1).norm() < ZERO_THRESHOLD && P_new.col(2).norm() < ZERO_THRESHOLD)
+            {
+                // Spherical wrist is located at the base of the robot
+                spherical_wrist = true;
+                const auto&[H_reversed, P_reversed] = IKS::reverse_kinematic_chain(H, P_new);
+                bot_kinematics = std::make_unique<IKS::Spherical_Wrist_Robot>(H_reversed, P_reversed, true);
+                original_kinematics = std::make_unique<IKS::Spherical_Wrist_Robot>(H, P);
+            }
+            else 
             {
                 bot_kinematics = std::make_unique<IKS::General_6R>(H, P_new);
                 original_kinematics = std::make_unique<IKS::General_6R>(H, P);
