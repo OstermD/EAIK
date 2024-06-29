@@ -50,6 +50,7 @@ bool ik_test_3R_2_3_intersecting();
 
 // I/O Component tests
 bool test_eigen_IO();
+bool test_batched_IK();
 
 // Utility-Functions
 
@@ -104,7 +105,7 @@ int main(int argc, char *argv[])
 
 	// I/O Tests
 	test_eigen_IO();
-
+	test_batched_IK();
 	return 0;
 }
 
@@ -113,6 +114,54 @@ int main(int argc, char *argv[])
 // I/O Component tests
 //
 
+
+bool test_batched_IK()
+{
+	// Robot configuration for spherical wrist with second and third axis intersecting
+	Eigen::Matrix<double, 3, 6> H;
+	H << ez, -ey, -ey, ez, -ey, ez;
+	Eigen::Matrix<double, 3, 7> P;
+	P << 0.54864 * ez, -0.14224 * ey + 0.07493 * ez, 0.4318 * ex - 0.0254 * ey, 0.0381 * ey + 0.3517 * ez, 0.080299 * ez, 0.05334 * ez, zv;
+
+	EAIK::Robot spherical(H, P);
+	
+	std::vector<IKS::Homogeneous_T> ee_poses;
+	ee_poses.reserve(BATCH_SIZE);
+	std::vector<IKS::IK_Solution> solutions_reference;
+	solutions_reference.reserve(BATCH_SIZE);
+
+	for (unsigned i = 0; i < BATCH_SIZE; i++)
+	{
+		ee_poses.push_back(spherical.fwdkin(std::vector{rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle()}));
+		solutions_reference.push_back(spherical.calculate_IK(ee_poses.back()));
+	}
+	const std::vector<IKS::IK_Solution>& solutions_batched = spherical.calculate_IK_batched(ee_poses, 6);
+
+	// Make sure the solutions match up
+	bool is_equal = true;
+	for(unsigned i = 0; i < solutions_reference.size(); i++)
+	{
+		const std::vector<std::vector<double>>& Q_batched = solutions_batched.at(i).Q;
+		const std::vector<std::vector<double>>& Q_reference = solutions_reference.at(i).Q;
+
+		for(unsigned j = 0; j < Q_reference.size(); j++)
+		{
+			is_equal &= (Q_batched.at(j) == Q_reference.at(j)); 
+			is_equal &= solutions_batched.at(i).is_LS_vec.at(j) == solutions_reference.at(i).is_LS_vec.at(j);
+		}
+	}
+
+	std::cout << "\n===== Test [Batched-IK]: ";
+	if(is_equal)
+	{
+		std::cout << "[PASS] =====" << std::endl;
+	}else
+	{
+		std::cout << "[FAIL] =====" << std::endl;
+	}
+
+	return is_equal;
+}
 
 // Test Eigen Representation of IK-Solution object
 bool test_eigen_IO()
