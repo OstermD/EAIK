@@ -126,6 +126,46 @@ namespace EAIK
             }
         }
         return eigen_solution;                
+    }
+
+    std::vector<IKS::IK_Eigen_Solution> Robot::calculate_Eigen_IK_batched(std::vector<IKS::Homogeneous_T> EE_pose_batch, const unsigned worker_threads) const
+    {
+        std::vector<IKS::IK_Eigen_Solution> solutions(EE_pose_batch.size());
+        std::vector<std::thread> thread_pool;
+        thread_pool.reserve(worker_threads);
+
+        std::mutex pose_mutex;
+
+        auto kernel = 
+        [this, &pose_mutex, &solutions, &EE_pose_batch]{
+            pose_mutex.lock();
+            int solution_index = EE_pose_batch.size()-1;
+
+            while(solution_index >= 0)
+            {
+                const IKS::Homogeneous_T& pose = EE_pose_batch.back();
+                EE_pose_batch.pop_back();  
+                pose_mutex.unlock(); 
+
+                solutions.at(solution_index) = calculate_Eigen_IK(pose);
+
+                pose_mutex.lock();
+                solution_index = EE_pose_batch.size()-1;
+            }
+            pose_mutex.unlock(); 
+        };
+
+        for(unsigned i = 0; i < worker_threads; i++)
+        {
+            thread_pool.push_back(std::thread(kernel));
+        }
+
+        for(unsigned i = 0; i < worker_threads; i++)
+        {
+            thread_pool.at(i).join();
+        }
+
+        return solutions;
     }    
 
     IKS::Homogeneous_T Robot::fwdkin(const std::vector<double> &Q) const

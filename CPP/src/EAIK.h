@@ -16,7 +16,7 @@ namespace EAIK
         std::vector<IKS::IK_Solution> calculate_IK_batched(std::vector<IKS::Homogeneous_T> EE_pose_batch, const unsigned worker_threads) const;
 
         IKS::IK_Eigen_Solution calculate_Eigen_IK(const IKS::Homogeneous_T &ee_position_orientation) const;
-        //std::vector<IKS::IK_Solution> calculate_Eigen_IK_batched(std::vector<IKS::Homogeneous_T> EE_pose_batch, const unsigned worker_threads) const;
+        std::vector<IKS::IK_Eigen_Solution> calculate_Eigen_IK_batched(std::vector<IKS::Homogeneous_T> EE_pose_batch, const unsigned worker_threads) const;
 
         IKS::Homogeneous_T fwdkin(const std::vector<double> &Q) const;
         IKS::Homogeneous_T fwdkin_Eigen(const Eigen::VectorXd &Q) const;

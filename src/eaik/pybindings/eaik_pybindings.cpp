@@ -45,6 +45,14 @@ PYBIND11_MODULE(canonical_subproblems, m)
             :return:      IK-Solution class
         )pbdoc",
              py::arg("pose"))
+        .def("calculate_IK_batched", &EAIK::Robot::calculate_Eigen_IK_batched, R"pbdoc(
+            Run inverse kinematics for a batch of EE poses.
+
+            :param pose:  Batch of 4x4 Homogeneous transformation matrix
+            :param num_worker_threads: Number of total worker threads to assign
+            :return:      Batch of IK-Solution classes
+        )pbdoc",
+             py::arg("pose_batch"), py::arg("num_worker_threads"))
         .def("fwdkin", &EAIK::Robot::fwdkin_Eigen, R"pbdoc(
             Run forward kinematics.
 
