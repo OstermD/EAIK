@@ -21,7 +21,6 @@ class Robot:
         robot = URDF.load(file_path)
         joints = robot._sort_joints(robot.actuated_joints)
 
-
         fk_zero_pose = robot.link_fk()  # Calculate FK
 
         parent_p = np.zeros(3)
@@ -37,6 +36,7 @@ class Robot:
         # Endeffector displacement is (0,0,0)
         P = np.vstack([P, np.zeros(3)])
         self.__robot = cs.Robot(H.T, P.T,True)
+        
     def hasSphericalWrist(self):
         return self.__robot.isSpherical()
     
@@ -46,3 +46,12 @@ class Robot:
     def IK(self, pose : np.ndarray):
         return self.__robot.calculate_IK(pose)
         
+    def IK_batched(self, pose_batch, num_worker_threads=4):
+        # Check if the input is a pure numpy array
+        if isinstance(pose_batch, np.ndarray) and pose_batch.ndim == 3 and pose_batch.shape[1:] == (4, 4):
+            pose_list = [pose_batch[i] for i in range(pose_batch.shape[0])]
+        elif isinstance(pose_batch, list) and all(isinstance(p, np.ndarray) and p.shape == (4, 4) for p in pose_batch):
+            pose_list = pose_batch
+        else:
+            raise ValueError("Input must be a numpy array with shape (batch_size, 4, 4) or a list of 2D numpy arrays with shape (4, 4)")
+        return self.__robot.calculate_IK_batched(pose_list, num_worker_threads)
