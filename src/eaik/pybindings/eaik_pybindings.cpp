@@ -37,7 +37,16 @@ PYBIND11_MODULE(canonical_subproblems, m)
         });
 
     py::class_<EAIK::Robot>(m, "Robot")
-        .def(py::init<const Eigen::MatrixXd &, const Eigen::MatrixXd &, bool>())
+        .def(py::init<const Eigen::MatrixXd &, const Eigen::MatrixXd &, const Eigen::Matrix<double, 3, 3> &, const std::vector<std::pair<int, double>>&, bool>(), R"pbdoc(
+            The EAIK Robot class.
+
+            :param H:  Unit vectors defining the joint axes
+            :param P:  Linear Joint offsets
+            :param R6T:  Endeffector orientation w.r.t. joint 6
+            :param fixed_axes:  List of tuples defining fixed joints (zero-indexed) (i, q_i+1)    
+            :param use_double_precision:  Use double precision (standard)
+        )pbdoc",
+        py::arg("H"), py::arg("P"), py::arg("R6T"), py::arg("fixed_axes"), py::arg("use_double_precision"))
         .def("calculate_IK", &EAIK::Robot::calculate_Eigen_IK, R"pbdoc(
             Run inverse kinematics.
 

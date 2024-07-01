@@ -139,7 +139,7 @@ namespace EAIK
     // Eigen matrices as solutions for the pybindings
     IKS::IK_Eigen_Solution Robot::calculate_Eigen_IK(const IKS::Homogeneous_T &ee_position_orientation) const
     {
-        IKS::IK_Solution vector_solution = bot_kinematics->calculate_IK(ee_position_orientation);
+        IKS::IK_Solution vector_solution = calculate_IK(ee_position_orientation);
         IKS::IK_Eigen_Solution eigen_solution;
 
         if(vector_solution.Q.size() > 0)

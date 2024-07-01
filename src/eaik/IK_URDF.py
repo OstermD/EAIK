@@ -17,7 +17,7 @@ class Robot:
         axis_n = R.dot(axis)
         return (axis_n, T)
 
-    def __init__(self, file_path):
+    def __init__(self, file_path : str, fixed_axes : list[tuple[int, float]], use_double_precision : bool = True):
         robot = URDF.load(file_path)
         joints = robot._sort_joints(robot.actuated_joints)
 
@@ -35,7 +35,7 @@ class Robot:
 
         # Endeffector displacement is (0,0,0)
         P = np.vstack([P, np.zeros(3)])
-        self.__robot = cs.Robot(H.T, P.T,True)
+        self.__robot = cs.Robot(H.T, P.T, np.eye(3), fixed_axes, use_double_precision)
         
     def hasSphericalWrist(self):
         return self.__robot.isSpherical()
