@@ -4,7 +4,7 @@ from setuptools import setup
 
 ext_modules = [
     Pybind11Extension(
-        "eaik.pybindings.canonical_subproblems",
+        "eaik.pybindings.EAIK",
         sorted(("src/eaik/pybindings/eaik_pybindings.cpp",
                 "CPP/src/IK/utils/kinematic_utils.cpp",
                 "CPP/src/IK/General_IK.cpp",

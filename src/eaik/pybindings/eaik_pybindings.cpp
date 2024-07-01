@@ -8,21 +8,11 @@
 namespace py = pybind11;
 
 
-PYBIND11_MODULE(canonical_subproblems, m)
+PYBIND11_MODULE(EAIK, m)
 {
     m.doc() = R"pbdoc(
-    Pybind11 of canonical subproblems for inverse kinematics
-    by
+    Pybind11 of EAIK
     )pbdoc";
-
-    /*input:
-    kin: kinematics struct with form:
-        root
-            -> H          : [h_1 h_2 ... h_n]
-                            (3 x n) actuator axes
-            -> P          : [p_{O,1} p_{1,2} ... p_{n,T}]
-                            (3 x n + 1) actuator displacements
-    */
 
     py::class_<IKS::IK_Eigen_Solution>(m, "IKSolution")
         .def(py::init<>())

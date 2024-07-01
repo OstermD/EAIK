@@ -1,5 +1,5 @@
 import evaluate_ik as eval
-from eaik.IK_CSV import Robot
+from eaik.IK_Homogeneous import Robot
 import numpy as np
 import csv
 
@@ -7,7 +7,6 @@ def load_test_csv(path):
     """
     Loads test robots from csv
     """
-    bot = Robot(path, False)
     total_num_ls = 0
     error_sum = 0
     total_num_analytic = 0
@@ -15,16 +14,8 @@ def load_test_csv(path):
     with open(path, newline='') as csvfile:
         reader = csv.DictReader(csvfile)
 
-        T01 = None
-        T02 = None
-        T03 = None
-        T04 = None
-        T05 = None
-        T06 = None
-
+        first_line = True
         for row in reader:
-            q = np.array([np.float64(row['q1']), np.float64(row['q2']), np.float64(row['q3']),
-                        np.float64(row['q4']), np.float64(row['q5']), np.float64(row['q6'])])
             T01 = np.array([[np.float64(row['1-T00']), np.float64(row['1-T01']), np.float64(row['1-T02']), np.float64(row['1-T03'])],
                             [np.float64(row['1-T10']), np.float64(row['1-T11']), np.float64(row['1-T12']), np.float64(row['1-T13'])], 
                             [np.float64(row['1-T20']), np.float64(row['1-T21']), np.float64(row['1-T22']), np.float64(row['1-T23'])],
@@ -49,26 +40,32 @@ def load_test_csv(path):
                             [np.float64(row['6-T10']), np.float64(row['6-T11']), np.float64(row['6-T12']), np.float64(row['6-T13'])], 
                             [np.float64(row['6-T20']), np.float64(row['6-T21']), np.float64(row['6-T22']), np.float64(row['6-T23'])],
                             [np.float64(row['6-T30']), np.float64(row['6-T31']), np.float64(row['6-T32']), np.float64(row['6-T33'])]])
-
-            frame_transformations = np.array([T01, T02, T03, T04, T05, T06])
+            T0EE = T06
             
+            frame_transformations = np.array([T01, T02, T03, T04, T05, T06, T0EE])
             
-            ik_solutions = bot.IK(T06)
-            avg_error, num_analytic, is_ls  = eval.evaluate_ik(bot, ik_solutions, T06, np.eye(3))
-
-            if is_ls:
-                # LS solution
-                total_num_ls += 1
-                error_sum += avg_error
-            elif num_analytic > 0:
-                # Analytic solutions
-                error_sum += avg_error
-                total_num_analytic += 1
+            if(first_line):
+                bot = Robot(joint_trafos=frame_transformations, use_double_precision=False)
+                first_line = False
             else:
-                num_no_solution += 1
+                ik_solutions = bot.IK(T0EE)
+                avg_error, num_analytic, is_ls  = eval.evaluate_ik(bot, ik_solutions, T0EE, np.eye(3))
+
+                if is_ls:
+                    # LS solution
+                    total_num_ls += 1
+                    error_sum += avg_error
+                elif num_analytic > 0:
+                    # Analytic solutions
+                    error_sum += avg_error
+                    total_num_analytic += 1
+                else:
+                    num_no_solution += 1
 
     if total_num_analytic + total_num_ls > 0:
         print("Average error: ", error_sum / (total_num_analytic + total_num_ls))
     print("Number success: ", total_num_analytic + total_num_ls)
     print("Number failure: ", num_no_solution)
     print("Number LS: ", total_num_ls)
+
+load_test_csv("/home/daniel/Documents/robot_1.csv")
