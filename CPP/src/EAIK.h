@@ -3,6 +3,7 @@
 
 #include <eigen3/Eigen/Dense>
 #include <memory>
+#include <tuple>
 
 #include "IKS.h"
 
@@ -11,7 +12,7 @@ namespace EAIK
     class Robot
     {
     public:
-        Robot(const Eigen::MatrixXd &H, const Eigen::MatrixXd &P, bool is_double_precision=true);
+        Robot(const Eigen::MatrixXd &H, const Eigen::MatrixXd &P, const std::vector<std::pair<int, double>>& fixed_axes={}, bool is_double_precision=true);
         IKS::IK_Solution calculate_IK(const IKS::Homogeneous_T &ee_position_orientation) const;
         std::vector<IKS::IK_Solution> calculate_IK_batched(std::vector<IKS::Homogeneous_T> EE_pose_batch, const unsigned worker_threads) const;
 

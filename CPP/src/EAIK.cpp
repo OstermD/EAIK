@@ -9,7 +9,7 @@
 
 namespace EAIK
 {
-    Robot::Robot(const Eigen::MatrixXd &H, const Eigen::MatrixXd &P, bool is_double_precision)
+    Robot::Robot(const Eigen::MatrixXd &H, const Eigen::MatrixXd &P, const std::vector<std::pair<int, double>>& fixed_axes, bool is_double_precision)
     {
         if(is_double_precision)
         {
@@ -17,11 +17,18 @@ namespace EAIK
             AXIS_INTERSECT_THRESHOLD = 1e-9;
         }
 
-        Eigen::MatrixXd P_new = remodel_kinematics(H, P, ZERO_THRESHOLD, AXIS_INTERSECT_THRESHOLD);
         if(P.cols() != H.cols() + 1)
         {
             throw std::runtime_error("Wrong input dimensions for H and P. Note that #P = #H+1.");
         }
+
+        // Insert fixed axes into the kinematic chain
+        if(fixed_axes.size()>0)
+        {
+            
+        }
+
+        Eigen::MatrixXd P_new = remodel_kinematics(H, P, ZERO_THRESHOLD, AXIS_INTERSECT_THRESHOLD);
 
         switch (H.cols())
         {
