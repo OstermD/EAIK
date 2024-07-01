@@ -27,7 +27,7 @@ namespace IKS
         // General Robot kinematics
     public:
         General_Robot(const Eigen::MatrixXd &H, const Eigen::MatrixXd &P);
-        virtual IK_Solution calculate_IK(const Homogeneous_T &ee_position_orientation) const = 0;
+        virtual IK_Solution calculate_IK(const Homogeneous_T &ee_position_orientation) const;
         virtual Homogeneous_T fwdkin(const std::vector<double> &Q) const final;
 
     private:

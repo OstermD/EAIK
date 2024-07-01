@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "EAIK.h"
+#include "kinematic_remodelling.h"
 
 #define ERROR_PASS_EPSILON 1e-5
 #define BATCH_SIZE 100
@@ -14,6 +15,9 @@ const Eigen::Vector3d zv(0, 0, 0);
 const Eigen::Vector3d ex(1, 0, 0);
 const Eigen::Vector3d ey(0, 1, 0);
 const Eigen::Vector3d ez(0, 0, 1);
+
+// NR Tests
+bool ik_test_7R_KUKA_R800();
 
 // 6R Tests
 bool ik_test_puma();
@@ -47,6 +51,7 @@ bool ik_test_3R_1_2_3_parallel();
 bool ik_test_3R_1_2_3_parallel_2();
 bool ik_test_3R_1_2_intersecting();
 bool ik_test_3R_2_3_intersecting();
+bool ik_test_3R_PUMA_locked_wrist();
 
 // I/O Component tests
 bool test_eigen_IO();
@@ -70,6 +75,10 @@ double rand_angle()
 
 int main(int argc, char *argv[])
 {
+	// NR Tests (by joint locking)
+	ik_test_7R_KUKA_R800();
+	ik_test_3R_PUMA_locked_wrist();
+
 	// 6R Tests
 	ik_test_puma();
 	ik_test_IRB6640();
@@ -106,6 +115,7 @@ int main(int argc, char *argv[])
 	// I/O Tests
 	test_eigen_IO();
 	test_batched_IK();
+
 	return 0;
 }
 
@@ -238,9 +248,61 @@ bool test_eigen_IO()
 
 
 //
+// NR Tests (by Joint locking)
+//
+
+
+bool ik_test_7R_KUKA_R800()
+{
+	// Robot configuration for KUKA LBR iiwa 7 R800
+	Eigen::Matrix<double, 3, 7> H;
+	H << ez, ey, ez, -ey, ez, ey, ez;
+	Eigen::Matrix<double, 3, 8> P;
+	P << (0.15 + 0.19) * ez, zv, 0.21 * ez, 0.19 * ez, (0.21 + 0.19) * ez, zv, zv, (0.081 + 0.045) * ez;
+
+	// Kuka R800 with q3 locked in random configuration
+	double q3_angle = rand_angle();
+	EAIK::Robot kukaR800(H, P, Eigen::Matrix<double, 3, 3>::Identity(), {std::pair<int, double>(2, q3_angle)});
+
+	std::vector<IKS::Homogeneous_T> ee_poses;
+	ee_poses.reserve(BATCH_SIZE);
+	for (unsigned i = 0; i < BATCH_SIZE; i++)
+	{
+		ee_poses.push_back(kukaR800.fwdkin(std::vector{rand_angle(), rand_angle(), q3_angle, rand_angle(), rand_angle(), rand_angle(), rand_angle()}));
+	}
+
+	return evaluate_test("IK 7R spherical wrist - KUKA LBR iiwa 7 R800", kukaR800, ee_poses);
+}
+
+
+//
 // 3R Tests
 //
 
+
+bool ik_test_3R_PUMA_locked_wrist()
+{
+	// Robot configuration for spherical wrist with second and third axis intersecting
+	Eigen::Matrix<double, 3, 6> H;
+	H << ez, -ey, -ey, ez, -ey, ez;
+	Eigen::Matrix<double, 3, 7> P;
+	P << 0.54864 * ez, -0.14224 * ey + 0.07493 * ez, 0.4318 * ex - 0.0254 * ey, 0.0381 * ey + 0.3517 * ez, 0.080299 * ez, 0.05334 * ez, zv;
+
+	// Lock puma wrist such that it behaves like a 3R manipulator
+	double q4 = rand_angle();
+	double q5 = rand_angle();
+	double q6 = rand_angle();
+	EAIK::Robot puma_locked_wrist(H, P, Eigen::Matrix<double, 3, 3>::Identity(), {std::pair<int, double>(4, q5), std::pair<int, double>(3, q4), std::pair<int, double>(5, q6)});
+	
+	std::vector<IKS::Homogeneous_T> ee_poses;
+	ee_poses.reserve(BATCH_SIZE);
+	for (unsigned i = 0; i < BATCH_SIZE; i++)
+	{
+		ee_poses.push_back(puma_locked_wrist.fwdkin(std::vector{rand_angle(), rand_angle(), rand_angle(), q4, q5, q6}));
+	}
+
+	return evaluate_test("IK 3R puma - locked wrist", puma_locked_wrist, ee_poses);
+}
 
 bool ik_test_3R_1_2_Parallel()
 {
@@ -599,9 +661,9 @@ bool ik_test_456_Parallel()
 	const Eigen::Vector3d ez(0, 0, 1);
 
 	Eigen::Matrix<double, 3, 6> bot_H;
-	bot_H << ez, ex, ez, ey, ey, ey;//ey, ey, ey, ez, ex, ez;
+	bot_H << ez, ex, ez, ey, ey, ey;
 	Eigen::Matrix<double, 3, 7> bot_P;
-	bot_P << zv, ex+ey, ez+ey, -ex, ez-ex, ex, zv;//zv, ex, ez-ex, -ex, ez+ey, ex+ey, zv;
+	bot_P << zv, ex+ey, ez+ey, -ex, ez-ex, ex, zv;
 	
 	EAIK::Robot three_parallel(bot_H, bot_P);
 
@@ -624,9 +686,9 @@ bool ik_test_456_Parallel_12_Intersecting()
 	const Eigen::Vector3d ez(0, 0, 1);
 
 	Eigen::Matrix<double, 3, 6> bot_H;
-	bot_H << ez, ex, ez, ey, ey, ey; //ey, ey, ey, ez, ex, ez;
+	bot_H << ez, ex, ez, ey, ey, ey; 
 	Eigen::Matrix<double, 3, 7> bot_P;
-	bot_P << zv, ex, ez+ey, -ex, ez-ex, ex, zv; //zv, ex, ez-ex, -ex, ez+ey, ex, zv;
+	bot_P << zv, ex, ez+ey, -ex, ez-ex, ex, zv;
 	
 	EAIK::Robot three_parallel(bot_H, bot_P);
 	std::vector<IKS::Homogeneous_T> ee_poses;
@@ -644,9 +706,9 @@ bool ik_test_456_Parallel_12_Intersecting()
 bool ik_test_345_Parallel()
 {
 	Eigen::Matrix<double, 3, 6> three_parallel_H;
-	three_parallel_H <<  ex, ez, ex, ex, ex, ez; //ez, ex, ex, ex, ez, ex;
+	three_parallel_H <<  ex, ez, ex, ex, ex, ez;
 	Eigen::Matrix<double, 3, 7> three_parallel_P;
-	three_parallel_P <<  ex, ex+ey, ey, ey, ey, ey, ez;//ez, ey, ey, ey, ey, ey + ex, ex;
+	three_parallel_P <<  ex, ex+ey, ey, ey, ey, ey, ez;
 
 	EAIK::Robot three_parallel(three_parallel_H, three_parallel_P);
 
@@ -688,9 +750,9 @@ bool ik_test_spherical_reversed()
 {
 	// Robot configuration for spherical wrist with
 	Eigen::Matrix<double, 3, 6> H;
-	H << ex, ey, ex, ey, ez, ey;// ey, ez, ey, ex, ey, ex;
+	H << ex, ey, ex, ey, ez, ey;
 	Eigen::Matrix<double, 3, 7> P;
-	P << zv, ex, zv, ex+ez, ex+ez, ex+ez, zv;//zv, ex + ez, ex + ez, ex + ez, zv, ex, zv;
+	P << zv, ex, zv, ex+ez, ex+ez, ex+ez, zv;
 
 	EAIK::Robot spherical(H, P);
 
@@ -709,10 +771,9 @@ bool ik_test_puma_reversed()
 {
 	// Robot configuration for spherical wrist with second and third axis intersecting
 	Eigen::Matrix<double, 3, 6> H;
-	H << ez, -ey, ez, -ey, -ey, ez; //ez, -ey, -ey, ez, -ey, ez;
+	H << ez, -ey, ez, -ey, -ey, ez;
 	Eigen::Matrix<double, 3, 7> P;
 	P << zv, 0.05334 * ez, 0.080299 * ez, 0.0381 * ey + 0.3517 * ez, 0.4318 * ex - 0.0254 * ey, -0.14224 * ey + 0.07493 * ez,0.54864 * ez;
-	//0.54864 * ez, -0.14224 * ey + 0.07493 * ez, 0.4318 * ex - 0.0254 * ey, 0.0381 * ey + 0.3517 * ez, 0.080299 * ez, 0.05334 * ez, zv;
 
 	EAIK::Robot spherical(H, P);
 	

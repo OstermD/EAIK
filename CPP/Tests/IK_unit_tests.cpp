@@ -7,6 +7,7 @@
 
 #include "IKS.h"
 #include "kinematic_utils.h"
+#include "kinematic_remodelling.h"
 
 #define ERROR_PASS_EPSILON 1e-6
 #define BATCH_SIZE 100
@@ -27,6 +28,7 @@ bool ik_test_PUMA();
 bool ik_test_SPHERICAL_2_3_P_REDUNDANT();
 
 bool test_inv_kin_chain();
+bool test_partial_joint_parametrization();
 
 // No spherical wrist
 bool ik_test_3P();
@@ -50,6 +52,7 @@ double rand_angle()
 int main(int argc, char *argv[])
 {
 	test_inv_kin_chain();
+	test_partial_joint_parametrization();
 	
 	// IK tests
 	ik_test_SPHERICAL_1_2_P();
@@ -67,6 +70,46 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
+// Test partial parametrization of the kinematic chain
+bool test_partial_joint_parametrization()
+{
+	// Puma config
+	Eigen::Matrix<double, 3, 6> puma_H;
+	puma_H << ez, -ey, -ey, ez, ey, ez;
+	Eigen::Matrix<double, 3, 7> puma_P;
+	puma_P << 0.62357 * ez, zv, 0.4318 * ex - 0.16764 * ey, 0.432089 * ez + 0.0381 * ey, zv, zv, 0.05334 * ez;
+
+	IKS::General_Robot puma(puma_H, puma_P);
+
+	std::vector<double> joint_angles {rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle()};
+
+	IKS::Homogeneous_T reference_ee_pose = puma.fwdkin(joint_angles);
+	
+	bool is_passed = true;
+	std::vector<std::pair<int,double>> partial_parametrization;
+	for(unsigned i = 0; i < 6; i++)
+	{
+		partial_parametrization.push_back({i, joint_angles.at(i)});
+		const auto&[H_partial, P_partial, R6T] = EAIK::partial_joint_parametrization(puma_H, puma_P, partial_parametrization);
+
+		IKS::General_Robot partial_puma(H_partial, P_partial);
+		IKS::Homogeneous_T partial_ee_pose = partial_puma.fwdkin(std::vector<double>(joint_angles.begin()+i+1,joint_angles.end()));
+		partial_ee_pose.block<3,3>(0,0) *= R6T;
+
+		is_passed &= (partial_ee_pose-reference_ee_pose).isZero(1e-15);
+	}
+
+	std::cout << "\n===== Test [Partial Kinematic Parametrization]: ";
+	if (is_passed)
+	{
+		std::cout << "[PASS] =====" << std::endl;
+	}
+	else
+	{
+		std::cout << "[FAIL] =====" << std::endl;
+	}
+	return is_passed;
+}
 
 // Test kinematic chain inversion
 bool test_inv_kin_chain()

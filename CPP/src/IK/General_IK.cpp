@@ -41,6 +41,11 @@ namespace IKS
         return result;
     }
 
+    IK_Solution General_Robot::calculate_IK(const Homogeneous_T &ee_position_orientation) const
+    {
+        throw std::runtime_error("General Robot has no valid IK formulation. Use corresponding specifications for 6R/3R robots or fix joint values for redundant robots");
+    }
+
     General_6R::General_6R(const Eigen::Matrix<double, 3, 6> &H, const Eigen::Matrix<double, 3, 7> &P)
         : General_Robot(H,P), H(H), P(P)
     {
