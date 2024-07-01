@@ -14,6 +14,6 @@ namespace EAIK
     Eigen::MatrixXd remodel_kinematics(const Eigen::MatrixXd &H, const Eigen::MatrixXd &P, double ZERO_THRESHOLD, const double AXIS_INTERSECT_THRESHOLD);
 
     // Create kinematic chain that implies series of fixed joint values
-    std::pair<Eigen::MatrixXd, Eigen::MatrixXd> partial_joint_parametrization(const Eigen::MatrixXd &H, const Eigen::MatrixXd &P, std::vector<std::pair<int, double>> fixed_axes);
+    std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::Matrix<double, 3, 3>> partial_joint_parametrization(const Eigen::MatrixXd &H, const Eigen::MatrixXd &P, std::vector<std::pair<int, double>> fixed_axes, const Eigen::Matrix<double, 3, 3>& R6T=Eigen::Matrix<double, 3, 3>::Identity());
 } // namespace EAIK
 #endif

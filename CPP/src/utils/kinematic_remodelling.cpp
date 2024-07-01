@@ -133,31 +133,33 @@ namespace EAIK
         return P_new;
     }
 
-    std::pair<Eigen::MatrixXd, Eigen::MatrixXd> partial_joint_parametrization(const Eigen::MatrixXd &H, const Eigen::MatrixXd &P, std::vector<std::pair<int, double>> fixed_axes)
+    std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::Matrix<double, 3, 3>> partial_joint_parametrization(const Eigen::MatrixXd &H, const Eigen::MatrixXd &P, std::vector<std::pair<int, double>> fixed_axes, const Eigen::Matrix<double, 3, 3>& R6T)
     {
         // Sort fixed axes parametrization to start with last axis first
         std::sort(fixed_axes.begin(), fixed_axes.end(), [](const std::pair<int, double>& a, const std::pair<int, double>& b) {return a.first > b.first;});
         Eigen::MatrixXd H_new = H;
         Eigen::MatrixXd P_new = P;
-        std::cout<<H_new<<std::endl<<P_new<<std::endl;
+        Eigen::Matrix<double, 3, 3> r6t_new = R6T;
 
         for(const auto&[axis_index, q] : fixed_axes)
         {
             const Eigen::Matrix3d r_fixed = Eigen::AngleAxisd(q, H_new.col(axis_index).normalized()).toRotationMatrix();
             P_new.col(axis_index) += r_fixed*P_new.col(axis_index+1);
             
-            P_new.block(0, axis_index+1, 3, P_new.cols()-axis_index-2) = P_new.block(0, axis_index+2, 3, P_new.cols()-axis_index-2).eval();
+            P_new.block(0, axis_index+1, 3, P_new.cols()-axis_index-2) = r_fixed*P_new.block(0, axis_index+2, 3, P_new.cols()-axis_index-2).eval();
 
-            H_new.col(axis_index) = r_fixed*H_new.col(axis_index+1);
-            H_new.block(0, axis_index+1, 3, H_new.cols()-axis_index-2) = H_new.block(0, axis_index+2, 3, H_new.cols()-axis_index-2).eval();
-            std::cout<<H_new<<std::endl<<P_new<<std::endl;
+            // Only adjust r6t if last axis is locked
+            if(axis_index+1 < H_new.cols())
+            {
+                H_new.col(axis_index) = r_fixed*H_new.col(axis_index+1);
+                H_new.block(0, axis_index+1, 3, H_new.cols()-axis_index-2) = r_fixed*H_new.block(0, axis_index+2, 3, H_new.cols()-axis_index-2).eval();
+            }
 
             H_new = H_new.block(0, 0, 3, H_new.cols()-1).eval();
             P_new = P_new.block(0, 0, 3, P_new.cols()-1).eval();
-            
-            std::cout<<H_new<<std::endl<<P_new<<std::endl;
+            r6t_new = r_fixed*r6t_new;
         }
-        
-        return {H_new, P_new};
+
+        return {H_new, P_new,r6t_new};
     }
 } // namespace EAIK
