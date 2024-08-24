@@ -43,4 +43,3 @@ def test_urdf(path, batch_size):
     print("Number success: ", total_num_analytic + total_num_ls)
     print("Number failure: ", num_no_solution)
     print("Number LS: ", total_num_ls)
-

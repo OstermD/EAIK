@@ -1,10 +1,29 @@
 #include <eigen3/Eigen/Dense>
 #include <math.h>
-
+#include <iostream>
 #include "kinematic_utils.h"
 
 namespace IKS
 {
+    std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::Matrix3d> dh_to_H_P(const Eigen::VectorXd& dh_alpha, const Eigen::VectorXd& dh_a, const Eigen::VectorXd& dh_d)
+    {
+        Eigen::MatrixXd H (3, dh_a.size()); 
+        Eigen::MatrixXd P (3, dh_a.size()+1); 
+        Eigen::Matrix3d R = Eigen::Matrix3d::Identity();
+        P.col(0) = Eigen::Vector3d::Zero();
+        for (unsigned i = 0; i < dh_d.size(); ++i)
+        {
+            Eigen::Matrix3d R_loc;
+            R_loc << 1, 0, 0,
+                     0, std::cos(dh_alpha[i]), -std::sin(dh_alpha[i]),
+                     0, std::sin(dh_alpha[i]), std::cos(dh_alpha[i]);
+            H.col(i) = R*Eigen::Vector3d(0,0,1);
+            P.col(i+1) = R*Eigen::Vector3d(dh_a[i], 0, dh_d[i]);
+            R = R.eval()*R_loc;
+        }
+        return {H, P, R};
+    }
+
     Eigen::Vector3d create_normal_vector(const Eigen::Vector3d& v, const double numerical_threshold)
     {
         // Create some (numerically stable) normal vector to v 

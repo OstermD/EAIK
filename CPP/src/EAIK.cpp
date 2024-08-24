@@ -9,7 +9,19 @@
 
 namespace EAIK
 {
-    Robot::Robot(const Eigen::MatrixXd &H, const Eigen::MatrixXd &P, const Eigen::Matrix<double, 3, 3> R6T, const std::vector<std::pair<int, double>>& fixed_axes, bool is_double_precision) : R6T(R6T)
+    Robot::Robot(const Eigen::VectorXd& dh_alpha, const Eigen::VectorXd& dh_a, const Eigen::VectorXd& dh_d, const Eigen::Matrix<double, 3, 3> &R6T, const std::vector<std::pair<int, double>>& fixed_axes, bool is_double_precision)
+    {
+        const auto&[H, P, R6T_dh] = IKS::dh_to_H_P(dh_alpha, dh_a, dh_d);
+        this->R6T = R6T*R6T_dh;
+        init(H, P, fixed_axes, is_double_precision);
+    }
+
+    Robot::Robot(const Eigen::MatrixXd &H, const Eigen::MatrixXd &P, const Eigen::Matrix<double, 3, 3> &R6T, const std::vector<std::pair<int, double>>& fixed_axes, bool is_double_precision) : R6T(R6T)
+    {
+        init(H, P, fixed_axes, is_double_precision);
+    }
+
+    void Robot::init(const Eigen::MatrixXd &H, const Eigen::MatrixXd &P, const std::vector<std::pair<int, double>>& fixed_axes, bool is_double_precision)
     {
         if(is_double_precision)
         {
@@ -77,6 +89,7 @@ namespace EAIK
             break;
         }
     }
+
 
     IKS::IK_Solution Robot::calculate_IK(const IKS::Homogeneous_T &ee_position_orientation) const
     {
@@ -212,7 +225,9 @@ namespace EAIK
     IKS::Homogeneous_T Robot::fwdkin_Eigen(const Eigen::VectorXd &Q) const
     {
         std::vector<double> Q_stdVector(Q.data(), Q.data() + Q.size());
-        return original_kinematics->fwdkin(Q_stdVector);
+        IKS::Homogeneous_T sol_r06 = original_kinematics->fwdkin(Q_stdVector);
+        sol_r06.block<3,3>(0,0) *= R6T;
+        return sol_r06;
     }
     
     bool Robot::is_spherical() const

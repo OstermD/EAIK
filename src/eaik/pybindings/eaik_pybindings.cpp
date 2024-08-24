@@ -37,6 +37,17 @@ PYBIND11_MODULE(EAIK, m)
             :param use_double_precision:  Use double precision (standard)
         )pbdoc",
         py::arg("H"), py::arg("P"), py::arg("R6T"), py::arg("fixed_axes"), py::arg("use_double_precision"))
+        .def(py::init<const Eigen::VectorXd&, const Eigen::VectorXd&, const Eigen::VectorXd&, const Eigen::Matrix<double, 3, 3> &, const std::vector<std::pair<int, double>>&, bool>(), R"pbdoc(
+            The EAIK Robot class.
+
+            :param dh_alpha:  DH-Parameters: alpha
+            :param dh_a:  DH-Parameters: a
+            :param dh_d:  DH-Parameters: d
+            :param R6T:  Endeffector orientation w.r.t. joint 6
+            :param fixed_axes:  List of tuples defining fixed joints (zero-indexed) (i, q_i+1)    
+            :param use_double_precision:  Use double precision (standard)
+        )pbdoc",
+        py::arg("dh_alpha"), py::arg("dh_a"), py::arg("dh_d"), py::arg("R6T"), py::arg("fixed_axes"), py::arg("use_double_precision"))
         .def("calculate_IK", &EAIK::Robot::calculate_Eigen_IK, R"pbdoc(
             Run inverse kinematics.
 
