@@ -21,6 +21,7 @@ namespace IKS
             P.col(i+1) = R*Eigen::Vector3d(dh_a[i], 0, dh_d[i]);
             R = R.eval()*R_loc;
         }
+
         return {H, P, R};
     }
 

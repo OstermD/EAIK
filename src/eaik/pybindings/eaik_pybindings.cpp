@@ -73,5 +73,9 @@ PYBIND11_MODULE(EAIK, m)
         .def("is_spherical", &EAIK::Robot::is_spherical, R"pbdoc(
             Returns if robot has spherical wrist.
             :return:   bool
+        )pbdoc")
+        .def("has_known_decomposition", &EAIK::Robot::has_known_decomposition, R"pbdoc(
+            Returns if robot has a known SP decomposition
+            :return:   bool
         )pbdoc");
 }

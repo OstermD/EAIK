@@ -41,6 +41,9 @@ class Robot:
 
     def hasSphericalWrist(self):
         return self.__robot.is_spherical()
+    
+    def hasKnownDecomposition(self):
+        return self.__robot.has_known_decomposition()
 
     def fwdKin(self, Q : np.array):
         return self.__robot.fwdkin(Q)

@@ -54,7 +54,6 @@ namespace EAIK
             H_remodelled = H;
             this->R6T_partial = R6T;
         }
-
         switch (H_remodelled.cols())
         {
         case 6:
@@ -233,5 +232,10 @@ namespace EAIK
     bool Robot::is_spherical() const
     {
         return spherical_wrist;
+    }
+
+    bool Robot::has_known_decomposition() const
+    {
+        return this->bot_kinematics->has_known_decomposition();
     }
 } // namespace EAIK

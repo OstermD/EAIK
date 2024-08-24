@@ -43,3 +43,25 @@ def test_urdf(path, batch_size):
     print("Number success: ", total_num_analytic + total_num_ls)
     print("Number failure: ", num_no_solution)
     print("Number LS: ", total_num_ls)
+#(h5 x h6)(p56)==0)
+#test_urdf("/home/daniel/Documents/ros_kortex/kortex_description/arms/gen3_lite/6dof/urdf/GEN3-LITE.urdf", 1)
+h1=np.array([0, 0, 1])
+h2=np.array([0, -1, 0])
+h3=np.array([0, 1, 0])
+h4=np.array([0, 0, 1])
+h5=np.array([1, 0, 0])
+h6=np.array([0, 0, 1])
+
+p01=np.array([0, 0, 0.24325])
+p12=np.array([0, 0, 0])
+p23=np.array([0, -0.030001, 0.28])
+p34=np.array([0, 0.0200005, 0.245])
+p45=np.array([0.0285004, 0, 0])
+p56=np.array([0, 0, 0])
+p6T=np.array([0, 0, 0.105])
+
+#1x2 = 0
+
+#3x4 = 0
+print(np.cross(h3,h4).dot(p34))
+#5x6 = 0
