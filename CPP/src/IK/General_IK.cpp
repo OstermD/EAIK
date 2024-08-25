@@ -46,9 +46,59 @@ namespace IKS
         throw std::runtime_error("General Robot has no valid IK formulation. Use corresponding specifications for 6R/3R robots or fix joint values for redundant robots");
     }
 
+    bool General_Robot::has_known_decomposition() const
+    {
+        return false;
+    }
+
     General_6R::General_6R(const Eigen::Matrix<double, 3, 6> &H, const Eigen::Matrix<double, 3, 7> &P)
         : General_Robot(H,P), H(H), P(P)
     {
+    }
+
+    bool General_6R::has_known_decomposition() const
+    {
+        // Check for parallel axes
+        if (this->H.col(0).cross(this->H.col(1)).norm() < ZERO_THRESH &&
+            this->H.col(0).cross(this->H.col(2)).norm() < ZERO_THRESH &&
+            this->H.col(1).cross(this->H.col(2)).norm() < ZERO_THRESH)
+        {
+            // h1 || h2 || h3 -> first three axes parallel
+            // (h5 x h6)(p56)==0) -> h5 intersects h6
+            // And 5 not parallel to 6 (h5 x h6 =/= 0)
+            if(this->H.col(4).cross(this->H.col(5)).norm() >= ZERO_THRESH && 
+            std::fabs(this->H.col(4).cross(this->H.col(5)).transpose() * this->P.col(5)) < ZERO_THRESH)
+            {
+                return true;
+            }
+        }
+        else if (this->H.col(1).cross(this->H.col(2)).norm() < ZERO_THRESH &&
+                 this->H.col(1).cross(this->H.col(3)).norm() < ZERO_THRESH &&
+                 this->H.col(2).cross(this->H.col(3)).norm() < ZERO_THRESH)
+        {
+            // h2 || h3 || h4
+            return true;
+        }
+        else if (this->H.col(2).cross(this->H.col(3)).norm() < ZERO_THRESH &&
+                 this->H.col(2).cross(this->H.col(4)).norm() < ZERO_THRESH &&
+                 this->H.col(3).cross(this->H.col(4)).norm() < ZERO_THRESH)
+        {
+            // h3 || h4 || h5
+            return true;
+        }
+        else if (this->H.col(3).cross(this->H.col(4)).norm() < ZERO_THRESH &&
+                 this->H.col(3).cross(this->H.col(5)).norm() < ZERO_THRESH &&
+                 this->H.col(4).cross(this->H.col(5)).norm() < ZERO_THRESH)
+        {
+            // h4 || h5 || h6
+            if(this->H.col(0).cross(this->H.col(1)).norm() >= ZERO_THRESH && 
+            std::fabs(this->H.col(0).cross(this->H.col(1)).transpose() * this->P.col(1)) < ZERO_THRESH)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     IK_Solution General_6R::calculate_IK(const Homogeneous_T &ee_position_orientation) const

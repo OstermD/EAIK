@@ -30,6 +30,7 @@ namespace IKS
         virtual IK_Solution calculate_IK(const Homogeneous_T &ee_position_orientation) const;
         virtual Homogeneous_T fwdkin(const std::vector<double> &Q) const final;
 
+        virtual bool has_known_decomposition() const;
     private:
         Eigen::MatrixXd H;
         Eigen::MatrixXd P;
@@ -41,6 +42,8 @@ namespace IKS
     public:
         General_3R(const Eigen::Matrix<double, 3, 3> &H, const Eigen::Matrix<double, 3, 4> &P);
         IK_Solution calculate_IK(const Homogeneous_T &ee_position_orientation) const override;
+
+        bool has_known_decomposition() const override {return true;}
 
     private:
         Eigen::Matrix<double, 3, 3> H;
@@ -54,6 +57,8 @@ namespace IKS
         General_6R(const Eigen::Matrix<double, 3, 6> &H, const Eigen::Matrix<double, 3, 7> &P);
         IK_Solution calculate_IK(const Homogeneous_T &ee_position_orientation) const override;
 
+        bool has_known_decomposition() const override;
+
     private:
         Eigen::Matrix<double, 3, 6> H;
         Eigen::Matrix<double, 3, 7> P;
@@ -65,6 +70,8 @@ namespace IKS
     public:
         Spherical_Wrist_Robot(const Eigen::Matrix<double, 3, 6> &H, const Eigen::Matrix<double, 3, 7> &P, const bool use_inverted_chain=false);
         IK_Solution calculate_IK(const Homogeneous_T &ee_position_orientation) const override;
+
+        bool has_known_decomposition() const override {return true;}
 
     private:
         Eigen::Matrix<double, 3, 6> H;
