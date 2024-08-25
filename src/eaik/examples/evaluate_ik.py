@@ -1,8 +1,24 @@
 import numpy as np
+import csv
+from scipy.spatial.transform import Rotation as R
 
-LS_thershold_error = 1e-6
+def rotation_difference_vector(R1, R2):
+    # Calculate the relative rotation matrix
+    R_rel = np.dot(R2, R1.T)
+    
+    # Convert the relative rotation matrix to axis-angle representation
+    rotation = R.from_matrix(R_rel)
+    axis_angle = rotation.as_rotvec()
+
+    return axis_angle
+
 def evaluate_ik(bot, ik_solutions, groundtruth_pose, ee_zero_pose_rotation):
-    error_sum = 0
+    orientation_should = groundtruth_pose[:-1, :-1]
+    translation_should = groundtruth_pose[:-1, -1]
+            
+    error_sum_pos= np.zeros(3)
+    error_sum_rot= np.zeros(3)
+    
     num_analytic = 0
     is_ls = False
     analytic_solutions = []
@@ -21,28 +37,34 @@ def evaluate_ik(bot, ik_solutions, groundtruth_pose, ee_zero_pose_rotation):
             is_ls = True
             # Account for init nullposition rotation
             res[:-1, :-1] = res[:-1, :-1].dot(ee_zero_pose_rotation)
+            orientation_is = res[:-1, :-1]
+            translation_is = res[:-1, -1]
+            
             ls_error = np.linalg.norm(res - groundtruth_pose)
             if(smallest_ls_error > ls_error):
                 # New best LS solution
                 smallest_ls_error = ls_error
                 smallest_ls_solution = sol
         if smallest_ls_solution is not None:
-            if(smallest_ls_error < LS_thershold_error):
-                error_sum += smallest_ls_error
-        #else:
-            #print("No Solution")
+            res = bot.fwdKin(smallest_ls_solution)
+            res[:-1, :-1] = res[:-1, :-1].dot(ee_zero_pose_rotation)
+            orientation_is = res[:-1, :-1]
+            translation_is = res[:-1, -1]
+            
+            error_sum_pos += np.abs(translation_is-translation_should)
+            error_sum_rot += np.abs(rotation_difference_vector(orientation_should,orientation_is))   
+        else:
+            print("No Solution")
     else:
         for sol in analytic_solutions:
             res = bot.fwdKin(sol)
             # Account for init nullposition rotation
             res[:-1, :-1] = res[:-1, :-1].dot(ee_zero_pose_rotation)
-            error_sum += np.linalg.norm(res - groundtruth_pose)
+            orientation_is = res[:-1, :-1]
+            translation_is = res[:-1, -1]
+            
+            error_sum_pos += np.abs(translation_is-translation_should)
+            error_sum_rot += np.abs(rotation_difference_vector(orientation_should,orientation_is))   
             num_analytic+=1
 
-    avg_error = np.inf
-    if num_analytic > 0:
-        avg_error = error_sum / num_analytic
-    elif is_ls:
-        avg_error = error_sum
-
-    return avg_error, num_analytic, is_ls 
+    return error_sum_pos, error_sum_rot, is_ls
