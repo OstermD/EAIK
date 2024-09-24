@@ -8,21 +8,11 @@
 namespace py = pybind11;
 
 
-PYBIND11_MODULE(canonical_subproblems, m)
+PYBIND11_MODULE(EAIK, m)
 {
     m.doc() = R"pbdoc(
-    Pybind11 of canonical subproblems for inverse kinematics
-    by
+    Pybind11 of EAIK
     )pbdoc";
-
-    /*input:
-    kin: kinematics struct with form:
-        root
-            -> H          : [h_1 h_2 ... h_n]
-                            (3 x n) actuator axes
-            -> P          : [p_{O,1} p_{1,2} ... p_{n,T}]
-                            (3 x n + 1) actuator displacements
-    */
 
     py::class_<IKS::IK_Eigen_Solution>(m, "IKSolution")
         .def(py::init<>())
@@ -47,6 +37,17 @@ PYBIND11_MODULE(canonical_subproblems, m)
             :param use_double_precision:  Use double precision (standard)
         )pbdoc",
         py::arg("H"), py::arg("P"), py::arg("R6T"), py::arg("fixed_axes"), py::arg("use_double_precision"))
+        .def(py::init<const Eigen::VectorXd&, const Eigen::VectorXd&, const Eigen::VectorXd&, const Eigen::Matrix<double, 3, 3> &, const std::vector<std::pair<int, double>>&, bool>(), R"pbdoc(
+            The EAIK Robot class.
+
+            :param dh_alpha:  DH-Parameters: alpha
+            :param dh_a:  DH-Parameters: a
+            :param dh_d:  DH-Parameters: d
+            :param R6T:  Endeffector orientation w.r.t. joint 6
+            :param fixed_axes:  List of tuples defining fixed joints (zero-indexed) (i, q_i+1)    
+            :param use_double_precision:  Use double precision (standard)
+        )pbdoc",
+        py::arg("dh_alpha"), py::arg("dh_a"), py::arg("dh_d"), py::arg("R6T"), py::arg("fixed_axes"), py::arg("use_double_precision"))
         .def("calculate_IK", &EAIK::Robot::calculate_Eigen_IK, R"pbdoc(
             Run inverse kinematics.
 
@@ -71,6 +72,10 @@ PYBIND11_MODULE(canonical_subproblems, m)
              py::arg("Q"))
         .def("is_spherical", &EAIK::Robot::is_spherical, R"pbdoc(
             Returns if robot has spherical wrist.
+            :return:   bool
+        )pbdoc")
+        .def("has_known_decomposition", &EAIK::Robot::has_known_decomposition, R"pbdoc(
+            Returns if robot has a known SP decomposition
             :return:   bool
         )pbdoc");
 }

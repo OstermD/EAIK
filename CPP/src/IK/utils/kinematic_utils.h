@@ -7,5 +7,7 @@ namespace IKS
 
     std::pair<Eigen::MatrixXd, Eigen::MatrixXd> reverse_kinematic_chain(const Eigen::MatrixXd &H, const Eigen::MatrixXd &P);
     void reverse_vector_second_dimension(std::vector<std::vector<double>> &vector);
+
+    std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::Matrix3d> dh_to_H_P(const Eigen::VectorXd& dh_alpha, const Eigen::VectorXd& dh_a, const Eigen::VectorXd& dh_d);
 } // namespace IKS
 
