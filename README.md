@@ -11,8 +11,9 @@ This allows for a hard-coded decomposition algorithm to solve its inverse kinema
 Our approach surpasses current analytical methods in terms of usability and derivation speed without compromising computation time or the completeness of the overall solution set.
 
 The following figure illustrates a robot with a spherical wrist and the geometric representation of a subproblem we use to solve parts of its IK:
+
 <figure figcaption align="center">
-  <img width="50%" src="Images/Titlefigure.png"/>
+  <img width="50%" src="https://github.com/OstermD/EAIK/raw/PyPi/Images/Titlefigure.png"/>
 </figure>
 
 We adopt the solutions and overall canonical subproblem set from [Elias et al.](https://arxiv.org/abs/2211.05737):<br>
@@ -23,9 +24,11 @@ Please check out their publication and [implementation](https://github.com/rpiRo
 
 ## Capabilities of this Toolbox
 The current implementation supports automatic derivation of solutions for the following 6R and 3R manipulators, as well as their mirrored version (switched base and endeffector):
+<br>
 <figure figcaption align="center">
-  <img src="Images/Kinematic_types.png"/>
+  <img src="https://github.com/OstermD/EAIK/raw/PyPi/Images/Kinematic_types.png"/>
 </figure>
+
 In addition, we allow the user to solve arbitrary nR manipulators that, by locking individual joints, corrspond to one of the above kinematic families.
 
 We implement an user friendly interface for parametrizing a robot by a URDF file, DH parameters, or simply the homogeneous transformations that correspond to the joint axes placements (see src/eaik/examples).
@@ -48,7 +51,7 @@ Our goal is to make analytical IK as accessable as possible. The following examp
 You can find more elaborate examples on how to use our toolbox within the "src/eaik/examples" directory of our [GitHub Repository](https://github.com/OstermD/EAIK/tree/main).
 
 ### Simple DH Parametrization
-```
+```python
 import numpy as np
 from eaik.IK_DH import Robot
 
@@ -68,7 +71,7 @@ print(bot.fwdKin(np.array([1,1,1,1,1,1])))
 
 ### Robot from a URDF file and IK on random poses
 
-```
+```python
 import numpy as np
 import random
 from eaik.IK_URDF import Robot
@@ -95,7 +98,7 @@ def urdf_example(path, batch_size):
     for pose in poses:
         ik_solutions = bot.IK(pose)
 
-        # Print Forward kinematics for all solutions
+        # Print forward kinematics for all solutions
         for Q in ik_solutions.Q:
             pose_fwd = bot.fwdKin(Q)
             print(pose_fwd)

@@ -2,5 +2,5 @@
 
 recursive-include CPP/external/ik-geo/cpp/ *
 recursive-include CPP/src/ *
-graft Images
 prune src/eaik/examples
+prune Images

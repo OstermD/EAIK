@@ -13,7 +13,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only"
 ]
-keywords = ["Analytical Inverse Kinematic", "Inverse Kinematic", "Robot Kinematic"]
+keywords = ["Analytical Inverse Kinematics", "Inverse Kinematics", "Robot Kinematics"]
 dependencies = [
     "numpy >= 1.21.0",
     "urchin >= 0.0.27",
