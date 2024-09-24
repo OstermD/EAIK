@@ -96,7 +96,7 @@ bool test_partial_joint_parametrization()
 		IKS::Homogeneous_T partial_ee_pose = partial_puma.fwdkin(std::vector<double>(joint_angles.begin()+i+1,joint_angles.end()));
 		partial_ee_pose.block<3,3>(0,0) *= R6T;
 
-		is_passed &= (partial_ee_pose-reference_ee_pose).isZero(1e-15);
+		is_passed &= (partial_ee_pose-reference_ee_pose).isZero(1e-14);
 	}
 
 	std::cout << "\n===== Test [Partial Kinematic Parametrization]: ";

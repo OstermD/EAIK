@@ -1,5 +1,4 @@
 import numpy as np
-import csv
 from scipy.spatial.transform import Rotation as R
 
 def rotation_difference_vector(R1, R2):
@@ -55,6 +54,7 @@ def evaluate_ik(bot, ik_solutions, groundtruth_pose, ee_zero_pose_rotation):
             error_sum_rot += np.abs(rotation_difference_vector(orientation_should,orientation_is))   
         else:
             print("No Solution")
+            return None
     else:
         for sol in analytic_solutions:
             res = bot.fwdKin(sol)

@@ -1,11 +1,9 @@
 import numpy as np
 import random
-import time
-
 from eaik.IK_URDF import Robot
 import evaluate_ik as eval
 
-def test_urdf(path, batch_size):
+def batched_ik_example(path, batch_size):
     """
     Loads spherical-wrist robot from urdf, calculates IK using subproblems and checks the solution for a certian batch size
     """
@@ -22,26 +20,18 @@ def test_urdf(path, batch_size):
        poses.append(bot.fwdKin(angles))
 
     # Perform batched IK computation
-    solutions = bot.IK_batched(poses, 4)
+    solutions = bot.IK_batched(poses, num_worker_threads=4)
     
-    error_sum = 0
-    num_no_solution = 0
+    sum_pos_error = np.array([0.,0.,0.])
     total_num_ls = 0
-    total_num_analytic = 0
-    for i, solution in enumerate(solutions):
-        avg_error, num_analytic, is_ls  = eval.evaluate_ik(bot, solution, poses[i], np.eye(3))
+    for i,ik_solution in enumerate(solutions):
+        error_sum_pos, error_sum_rot, is_ls  = eval.evaluate_ik(bot, ik_solution, poses[i], np.eye(3))
         if is_ls:
             # LS solution
             total_num_ls += 1
-            error_sum += avg_error
-        elif num_analytic > 0:
-            # Analytic solutions
-            error_sum += avg_error
-            total_num_analytic += 1
-        else:
-            num_no_solution += 1
-    if total_num_analytic + total_num_ls > 0:
-        print("Average error: ", error_sum / (total_num_analytic + total_num_ls))
-    print("Number success: ", total_num_analytic + total_num_ls)
-    print("Number failure: ", num_no_solution)
+        sum_pos_error+=error_sum_pos
+    print("Avg. Position Error: ", sum_pos_error/len(poses))
+    print("Number analytical: ", len(poses)-total_num_ls)
     print("Number LS: ", total_num_ls)
+    
+batched_ik_example("Puma560.urdf", 5000)

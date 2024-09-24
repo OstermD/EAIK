@@ -1,5 +1,4 @@
 import numpy as np
-import random
 
 from eaik.IK_DH import Robot
 
