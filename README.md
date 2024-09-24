@@ -2,7 +2,6 @@
 ## Overview
 A preprint of the accompanying paper to this codebase is available [here](https://arxiv.org/abs/2409.14815).
 <br>
-This code resembles the implementation of the [EAIK Python toolbox](https://pypi.org/project/EAIK/). 
 Please also visit our [Website](https://eaik.cps.cit.tum.de) for further informations.
 
 With this toolbox, we propose a method for automatic inverse kinematic derivation.
@@ -43,48 +42,62 @@ We suggest using our pip-installable [PyPi package](https://pypi.org/project/EAI
 pip install EAIK
 ```
 
-<br>
-
-If you want to directly use the C++ functionality and skip the Python wrapper, feel free to use the EAIK::Robot() class of the C++ library in CPP/src.
-Make sure to clone the external dependencies of this library using:
-```
-$ git clone --recurse-submodules git@github.com:OstermD/EAIK.git
-```
-Then build the EAIK C++ library by using:
-
-```
-$ mkdir EAIK/CPP/src/build && cd EAIK/CPP/src/build
-$ cmake ..
-$ make
-```
-
-You can build and install the python package implemented by this exact revision of the EAIK repository by using:
-
-```
-pip install .
-```
 
 ## Python examples
-Our goal is to make analytical IK as accessable as possible.
-You can find examples on how to use our toolbox within the "src/eaik/examples" directory. 
-The following examples are available:
-* load_urdf.py : A simple showcase how to parse a robot's representation from a URDF file and solve it's IK
-* load_urdf_7dof.py: Loads a 7R robot (e.g., the KUKA iiwa7 r800), locks one joint in place and finds analytical IK solutions for it
-* batched_IK.py : Showcases how to perform multithreaded batched IK computations. Four threads are recommended.
-* dh_ik_example.py : 15 lines of code that show how you can use the DH convention to parametrized robots in our environment
-* evaluate_ik.py: Helper class to evaluate how the obtained solutions are
+Our goal is to make analytical IK as accessable as possible. The following example should just provide a quick insight into the simplicity in using EAIK.
+You can find more elaborate examples on how to use our toolbox within the "src/eaik/examples" directory of our [GitHub Repository](https://github.com/OstermD/EAIK/tree/main).
 
-## C++ Usage
-If you prefer to directly use our C++ implementation in your project, you can either parametrized your robot by the DH convention or use the internal representation.
-When using latter, the EAIK::Robot() class receives two parameters: H and P.
+### Simple DH Parametrization
+```
+import numpy as np
+from eaik.IK_DH import Robot
 
-H represents an Eigen MatrixXd with the columns corresponding to the unit vectors of each joint with respect to a global basis frame.
+"""
+Example DH parametrization + forward kinematics for a random robot kinematic
+"""
 
-P represents an Eigen MatrixXd with the columns corresponding to the link-offsets.
-P.col(i) therefore represents the offset between joint i and i+1 with the same orientation as the global basis frame.
-This convention is consistent with that of [Elias et al.](https://github.com/rpiRobotics/ik-geo)
-We suggest to take a look at the usage within the C++ tests in CPP/Tests/IK_system_tests.cpp to get a better understanding on how to use the C++ library in your project.
+d = np.array([0, 0, 0, 0.56426215, 0.31625527, 0])
+alpha = np.array([np.pi/2, -np.pi/2, 0, np.pi/2, np.pi/2, 0])
+a = np.array([0, 0.6766692, 0.93924826, 0.99652755, 0, 0.9355382])
+bot = Robot(alpha, a, d)
 
-## Q&A
-Feel free to open up a GitHub issue or a pullrequest if you have any suggestions or questions.
-This project is still in development.
+print(bot.hasKnownDecomposition())
+print(bot.fwdKin(np.array([1,1,1,1,1,1])))
+
+```
+
+### Robot from a URDF file and IK on random poses
+
+```
+import numpy as np
+import random
+from eaik.IK_URDF import Robot
+import evaluate_ik as eval
+
+def urdf_example(path, batch_size):
+    """
+    Loads spherical-wrist robot from urdf, calculates IK using subproblems and checks the solution for a certian batch size
+    """
+
+    bot = Robot(path)
+
+    # Example desired pose
+    test_angles = []
+    for i in range(batch_size):
+        rand_angles = np.array([random.random(), random.random(), random.random(), random.random(), random.random(),random.random()])
+        rand_angles *= 2*np.pi
+        test_angles.append(rand_angles)
+    poses = []
+
+    for angles in test_angles:
+       poses.append(bot.fwdKin(angles))
+        
+    for pose in poses:
+        ik_solutions = bot.IK(pose)
+
+        # Print Forward kinematics for all solutions
+        for Q in ik_solutions.Q:
+            pose_fwd = bot.fwdKin(Q)
+            print(pose_fwd)
+```
+s

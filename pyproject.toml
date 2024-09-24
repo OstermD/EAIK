@@ -22,8 +22,8 @@ dependencies = [
     "pybind11-stubgen >= 0.13.0",
 ]
 requires-python = ">=3.8"
-version="0.1.0"
+version="1.0.0"
 
 [project.urls]
 Homepage = "https://github.com/OstermD/EAIK"
-Preprint = "https://arxiv.org/abs/2409.14815" 
+Paper-Preprint = "https://arxiv.org/abs/2409.14815" 
