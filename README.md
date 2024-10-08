@@ -61,7 +61,7 @@ points of the two circles (black dots).
 </figure>
 
 The current implementation supports automatic derivation of solutions for the following 6R and 3R manipulators, as well as their mirrored version (switched base and endeffector).
-In addition, we allow the user to solve arbitrary nR manipulators that, by locking individual joints, corrspond to one of the above kinematic families.
+In addition, we allow the user to solve arbitrary nR manipulators that, by locking individual joints, corrspond to one of the below kinematic families.
 
 <br>
 <figure figcaption align="center">
@@ -78,14 +78,14 @@ The following figure shows an overview of our interface and a superficial showca
   <img src="Images/Poster_Method.png"/>
 </figure>
 
-If you require a vast amount of IK problems to be computed at once, we also implement a multithreaded batched version that allows you to make full use of your processor
+If you require a vast amount of IK problems to be computed at once, we also implement a multithreaded batched version that allows you to make full use of your processor.
 
 ## Installation
 ## Dependencies and Installation
 We use [Eigen 3.4](https://eigen.tuxfamily.org/index.php?title=Main_Page) for a fast implementation of the linear algebra operations within this toolbox.
 Make sure you have your Eigen headers placed in their standard directory ('/usr/include/eigen3', '/usr/local/include/eigen3') - otherwise the following step will not work for you.
 
-We suggest using our pip-installable [PyPi package](https://pypi.org/project/EAIK/#description). Simply use the following command on your Linux machine:
+We suggest using our pip-installable [PyPI package](https://pypi.org/project/EAIK/#description). Simply use the following command on your Linux machine:
 
 ```
 pip install EAIK
@@ -111,9 +111,8 @@ $ make
 
 
 ## Usage Example
-We currently provide support for CSV files containing the homogeneous transformations of each joint in zero-pose with respect to the basis, as well as [ROS URDF](http://wiki.ros.org/urdf) files.
-See our [PyPI Project](https://pypi.org/project/EAIK/) for more elaborate examples.
-A quick example that demonstrates the usability of our implementation is shown in the following Python code-snippet:
+We currently provide support parametrizing a robot via DH parameters, homogeneous transformations of each joint in zero-pose with respect to the basis, as well as [ROS URDF](http://wiki.ros.org/urdf) files.
+Some quick examples that demonstrate the usability of our implementation are shown in the following code-snippets:
 
 #### URDF
 ```python
@@ -167,12 +166,13 @@ def urdf_example(path, batch_size):
             pose_fwd = bot.fwdKin(Q)
             print(pose_fwd)
 ```
+Even more examples for the python interface are available [here](https://github.com/OstermD/EAIK/tree/main/src/eaik/examples).
 
 #### Using the C++ Library
-The example below is just a small code snipped. As the C++ code quickly becomes more evolved, we recommend a look into the [Software Tests](https://github.com/OstermD/EAIK/tree/main/CPP/Tests) we wrote for the C++ side. 
-The code there can also be taken as an example on how you can use our library in a bigger project that requires checking for least-square solutions etc.
+The example below is just a small code snipped. As the C++ code quickly becomes more evolved, we recommend to look into the [Software Tests](https://github.com/OstermD/EAIK/tree/main/CPP/Tests) we wrote for the C++ side. 
+The code there can also be used as an example on how you can use our library in a bigger project that, e.g., requires checks for least-square solutions etc.
 
-```C++
+```C
 #include <eigen3/Eigen/Dense>
 #include <vector>
 
@@ -231,8 +231,6 @@ void main()
   ik_7R_KUKA_R800();
 }
 ```
-
-Even more examples for the python interface are available [here](https://github.com/OstermD/EAIK/tree/main/src/eaik/examples).
 
 Again, if you are stuck somewhere or have open questions feel free to reach out to us.
 
