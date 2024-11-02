@@ -303,6 +303,11 @@ namespace IKS
             reverse_vector_second_dimension(solution.Q);
         }
 
+        if (solution.Q.empty())
+        {
+            throw std::runtime_error("No valid solution found for given end-effector position and orientation.");
+        }
+        
         return solution;
     }
 };
