@@ -76,7 +76,14 @@ namespace EAIK
             {
                 bot_kinematics = std::make_unique<IKS::General_6R>(H_remodelled, P_remodelled);
                 original_kinematics = std::make_unique<IKS::General_Robot>(H, P);
+
+                // Check if the kinematic decomposition is known. For spherical wrists, we assume 
+                if (!bot_kinematics->has_known_decomposition())
+                {
+                    throw std::runtime_error("There is no valid subproblem decomposition for the given robot.");
+                }
             }
+
             break;
         
         case 3:
