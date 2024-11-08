@@ -31,6 +31,9 @@ namespace IKS
         virtual Homogeneous_T fwdkin(const std::vector<double> &Q) const final;
 
         virtual bool has_known_decomposition() const;
+
+        const Eigen::MatrixXd& get_H() const;
+        const Eigen::MatrixXd& get_P() const;
     private:
         Eigen::MatrixXd H;
         Eigen::MatrixXd P;
@@ -45,6 +48,8 @@ namespace IKS
 
         bool has_known_decomposition() const override {return true;}
 
+        const Eigen::Matrix<double, 3, 3>& get_H() const;
+        const Eigen::Matrix<double, 3, 4>& get_P() const;
     private:
         Eigen::Matrix<double, 3, 3> H;
         Eigen::Matrix<double, 3, 4> P;
@@ -59,6 +64,8 @@ namespace IKS
 
         bool has_known_decomposition() const override;
 
+        const Eigen::Matrix<double, 3, 6>& get_H() const;
+        const Eigen::Matrix<double, 3, 7>& get_P() const;
     private:
         Eigen::Matrix<double, 3, 6> H;
         Eigen::Matrix<double, 3, 7> P;

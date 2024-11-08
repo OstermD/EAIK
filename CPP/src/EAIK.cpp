@@ -96,6 +96,9 @@ namespace EAIK
         }
     }
 
+    IKS::General_Robot* Robot::get_bot_kinematics() const {
+        return bot_kinematics.get();
+    }
 
     IKS::IK_Solution Robot::calculate_IK(const IKS::Homogeneous_T &ee_position_orientation) const
     {
