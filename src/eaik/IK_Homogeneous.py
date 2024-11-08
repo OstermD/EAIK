@@ -29,9 +29,9 @@ class Robot:
             P = np.where(np.abs(P) < 1e-5, 0, P)
             H = np.where(np.abs(H) < 1e-5, 0, H)
             
-        # Endeffector displacement is (0,0,0)
-        hNt = joint_trafos[-2].T @ joint_trafos[-1]
-        P = np.vstack([P, hNt[:-1, -1]])
+        # Account for end effector pose
+        p_EE = joint_trafos[-1][:-1, -1] - joint_trafos[-2][:-1, -1] # Translation in local joint-frame
+        P = np.vstack([P, p_EE])
         rNt = joint_trafos[-1][:-1, :-1]  # Rotation in global basis frame
 
         self.__robot = EAIK.Robot(H.T, P.T, rNt, fixed_axes, True)
