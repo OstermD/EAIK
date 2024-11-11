@@ -50,14 +50,6 @@ double rand_angle()
 	return theta;
 }
 
-// Helper function to create an unsolvable IK
-IKS::Homogeneous_T large_offset_homogeneous_matrix()
-{
-    IKS::Homogeneous_T mat = IKS::Homogeneous_T::Identity();
-    mat(2, 3) = 1e6; // Set a large offset in the z direction
-    return mat;
-}
-
 int main(int argc, char *argv[])
 {
 	test_inv_kin_chain();
@@ -75,9 +67,6 @@ int main(int argc, char *argv[])
 
 	// Redundancy test might create warning output on std::out
 	ik_test_SPHERICAL_2_3_P_REDUNDANT();
-
-	// Test error on unsolvable kinematics
-	ik_test_unsolvable();
 	
 	return 0;
 }
@@ -163,36 +152,6 @@ bool test_inv_kin_chain()
 	}
 
 	return is_Pass;
-}
-
-bool ik_test_unsolvable()
-{
-	// Robot configuration for spherical wrist with second and third axis intersecting
-	Eigen::Matrix<double, 3, 6> unsolvable_H;
-	unsolvable_H << ez, ex, ex, ex, ez, ex;
-	Eigen::Matrix<double, 3, 7> unsolvable_P;
-	unsolvable_P << ez, ey, ey, ey, ey, ey + ex, ex;
-
-	IKS::General_6R unsolvable(unsolvable_H, unsolvable_P);
-
-	std::vector<IKS::Homogeneous_T> ee_poses;
-	ee_poses.reserve(BATCH_SIZE);
-	for (unsigned i = 0; i < BATCH_SIZE; i++)
-	{
-		// Create random end-effector pose and offset it
-		ee_poses.push_back(large_offset_homogeneous_matrix());
-	}
-
-	    try
-    {
-        evaluate_test("IK unsolvable", unsolvable, ee_poses);
-    }
-    catch (const std::runtime_error& e)
-    {
-        return true; // Return true if a runtime error is thrown
-    }
-
-    return false; // Return false if no runtime error is thrown
 }
 
 // Axis 2, 3, 4, parallel

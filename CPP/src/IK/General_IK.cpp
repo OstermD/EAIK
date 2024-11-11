@@ -311,22 +311,6 @@ namespace IKS
             reverse_vector_second_dimension(solution.Q);
         }
 
-        if (solution.Q.empty())
-        {
-            throw std::runtime_error("No valid solution found for given end-effector position and orientation.");
-        }
-
-        for (const auto& q_vec : solution.Q)
-        {
-            for (const auto& q : q_vec)
-            {
-                if (std::isnan(q))
-                {
-                    throw std::runtime_error("Solution contains NaN values.");
-                }
-            }
-        }
-
         return solution;
     }
 };
