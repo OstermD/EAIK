@@ -5,7 +5,7 @@ import eaik.pybindings.EAIK as EAIK
 from eaik.IK_Robot import IKRobot
 
 
-class Robot(IKRobot):
+class UrdfRobot(IKRobot):
     """A robot for which the kinematic chain is parsed from a URDF file."""
 
     def __init__(self,
@@ -32,7 +32,7 @@ class Robot(IKRobot):
         P = np.array([], dtype=np.int64).reshape(0, 3)  # offsets
         for i in range(len(joints)):
             joint_child_link = robot.link_map[joints[i].child]
-            h, p = Robot.urdf_to_sp_conv(fk_zero_pose[joint_child_link], joints[i].axis, parent_p)
+            h, p = self.urdf_to_sp_conv(fk_zero_pose[joint_child_link], joints[i].axis, parent_p)
             H = np.vstack([H, h])
             P = np.vstack([P, p])
             parent_p += p
