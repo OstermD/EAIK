@@ -49,6 +49,16 @@ class Robot:
         T = axis_trafo[:-1, -1] - parent_p  # Translation in local joint-frame
         axis_n = R.dot(axis)
         return axis_n, T
+
+    @property
+    def H(self) -> np.ndarray:
+        """Returns the joint axes of this robot"""
+        return self.__robot.bot_kinematics.H
+
+    @property
+    def P(self) -> np.ndarray:
+        """Returns the reference points for this robot"""
+        return self.__robot.bot_kinematics.P
     
     def hasSphericalWrist(self):
         return self.__robot.isSpherical()

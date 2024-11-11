@@ -77,5 +77,34 @@ PYBIND11_MODULE(EAIK, m)
         .def("has_known_decomposition", &EAIK::Robot::has_known_decomposition, R"pbdoc(
             Returns if robot has a known SP decomposition
             :return:   bool
+        )pbdoc")
+        .def_property_readonly("bot_kinematics", &EAIK::Robot::get_bot_kinematics, py::return_value_policy::reference_internal, R"pbdoc(
+            Returns a robot object that contains the kinematic properties of this robot.
+            :return: IKS::General_Robot*
         )pbdoc");
+    
+    py::class_<IKS::General_Robot>(m, "General_Robot")
+        .def(py::init<const Eigen::MatrixXd&, const Eigen::MatrixXd&>())
+        .def("calculate_IK", &IKS::General_Robot::calculate_IK)
+        .def("fwdkin", &IKS::General_Robot::fwdkin)
+        .def("has_known_decomposition", &IKS::General_Robot::has_known_decomposition)
+        .def_property_readonly("H", &IKS::General_Robot::get_H)
+        .def_property_readonly("P", &IKS::General_Robot::get_P);
+
+    py::class_<IKS::General_3R, IKS::General_Robot>(m, "General_3R")
+        .def(py::init<const Eigen::Matrix<double, 3, 3>&, const Eigen::Matrix<double, 3, 4>&>())
+        .def("calculate_IK", &IKS::General_3R::calculate_IK)
+        .def("has_known_decomposition", &IKS::General_3R::has_known_decomposition);
+
+    py::class_<IKS::General_6R, IKS::General_Robot>(m, "General_6R")
+        .def(py::init<const Eigen::Matrix<double, 3, 6>&, const Eigen::Matrix<double, 3, 7>&>())
+        .def("calculate_IK", &IKS::General_6R::calculate_IK)
+        .def("has_known_decomposition", &IKS::General_6R::has_known_decomposition)
+        .def_property_readonly("H", &IKS::General_Robot::get_H)
+        .def_property_readonly("P", &IKS::General_Robot::get_P);
+
+    py::class_<IKS::Spherical_Wrist_Robot, IKS::General_Robot>(m, "Spherical_Wrist_Robot")
+        .def(py::init<const Eigen::Matrix<double, 3, 6>&, const Eigen::Matrix<double, 3, 7>&, const bool>())
+        .def("calculate_IK", &IKS::Spherical_Wrist_Robot::calculate_IK)
+        .def("has_known_decomposition", &IKS::Spherical_Wrist_Robot::has_known_decomposition);
 }

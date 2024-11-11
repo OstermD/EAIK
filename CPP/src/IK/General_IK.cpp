@@ -51,6 +51,14 @@ namespace IKS
         return false;
     }
 
+    const Eigen::MatrixXd& General_Robot::get_H() const {
+        return H;
+    }
+
+    const Eigen::MatrixXd& General_Robot::get_P() const {
+        return P;
+    }
+
     General_6R::General_6R(const Eigen::Matrix<double, 3, 6> &H, const Eigen::Matrix<double, 3, 7> &P)
         : General_Robot(H,P), H(H), P(P)
     {

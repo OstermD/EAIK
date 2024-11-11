@@ -29,6 +29,7 @@ bool ik_test_SPHERICAL_2_3_P_REDUNDANT();
 
 bool test_inv_kin_chain();
 bool test_partial_joint_parametrization();
+bool ik_test_unsolvable();
 
 // No spherical wrist
 bool ik_test_3P();
