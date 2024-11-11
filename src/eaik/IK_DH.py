@@ -4,7 +4,7 @@ import eaik.pybindings.EAIK as EAIK
 from eaik.IK_Robot import IKRobot
 
 
-class Robot(IKRobot):
+class DhRobot(IKRobot):
     """A robot parameterized by standard Denavit-Hartenberg parameters"""
 
     def __init__(self,
