@@ -25,6 +25,16 @@ class IKRobot(ABC):
         axis_n = R.dot(axis)
         return axis_n, T
 
+    @property
+    def H(self) -> np.ndarray:
+        """Returns the joint axes of this robot"""
+        return self._robot.bot_kinematics.H
+
+    @property
+    def P(self) -> np.ndarray:
+        """Returns the reference points for this robot"""
+        return self._robot.bot_kinematics.P
+
     def hasSphericalWrist(self) -> bool:
         """Is true iff the robot has a spherical wrist."""
         return self._robot.is_spherical()

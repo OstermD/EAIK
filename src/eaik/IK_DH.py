@@ -27,10 +27,5 @@ class Robot(IKRobot):
         super().__init__()
         if fixed_axes is None:
             fixed_axes = []
-            
-        # Use numerical zero-threshold to "stabilize" solutions for single precision accuracy (experimental)
-        if not use_double_precision:
-            P = np.where(np.abs(P) < 1e-5, 0, P)
-            H = np.where(np.abs(H) < 1e-5, 0, H)
 
         self._robot = EAIK.Robot(dh_alpha, dh_a, dh_d, np.eye(3), fixed_axes, True)

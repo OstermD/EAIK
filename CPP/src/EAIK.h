@@ -26,6 +26,8 @@ namespace EAIK
 
         bool is_spherical() const;
         bool has_known_decomposition() const;
+
+        IKS::General_Robot* get_bot_kinematics() const;
     private:
         // Init function to allow nice constructor overloading
         void init(const Eigen::MatrixXd &H, const Eigen::MatrixXd &P, const std::vector<std::pair<int, double>>& fixed_axes={}, bool is_double_precision=true);
