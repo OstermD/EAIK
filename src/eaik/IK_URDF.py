@@ -5,7 +5,7 @@ import eaik.pybindings.EAIK as EAIK
 from eaik.IK_Robot import IKRobot
 
 
-class Robot(IKRobot):
+class DHRobot(IKRobot):
     """A robot for which the kinematic chain is parsed from a URDF file."""
 
     def __init__(self,
