@@ -69,7 +69,9 @@ namespace EAIK
                 // Spherical wrist is located at the base of the robot
                 spherical_wrist = true;
                 const auto&[H_reversed, P_reversed] = IKS::reverse_kinematic_chain(H_remodelled, P_remodelled);
-                bot_kinematics = std::make_unique<IKS::Spherical_Wrist_Robot>(H_reversed, P_reversed, true);
+                const Eigen::MatrixXd  P_reversed_remodelled = remodel_kinematics(H_reversed, P_reversed, ZERO_THRESHOLD, AXIS_INTERSECT_THRESHOLD);
+
+                bot_kinematics = std::make_unique<IKS::Spherical_Wrist_Robot>(H_reversed, P_reversed_remodelled, true);
                 original_kinematics = std::make_unique<IKS::General_Robot>(H, P);
             }
             else 

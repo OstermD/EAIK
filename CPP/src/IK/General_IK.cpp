@@ -57,7 +57,6 @@ namespace IKS
         : General_Robot(H,P), H(H), P(P)
     {
         this->kinematicClass = determine_Kinematic_Class();
-        std::cout<< "kin class "<< kinematicClass<<std::endl;
     }
 
     General_6R::KinematicClass General_6R::determine_Kinematic_Class()
