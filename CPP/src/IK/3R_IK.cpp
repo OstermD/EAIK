@@ -97,20 +97,18 @@ namespace IKS
         }
         else
         {
-            double d = this->H.col(0).transpose()*(p_13-this->P.col(1));
-            SP4 sp4(this->H.col(0), this->P.col(2), this->H.col(1), d);
-            sp4.solve();
+            SP3 sp3(this->P.col(2), -this->P.col(1), this->H.col(1), p_13.norm());
+            sp3.solve();
 
-            const std::vector<double> &theta_2 = sp4.get_theta();
+            const std::vector<double> &theta_2 = sp3.get_theta();
 
             for (const auto &q2 : theta_2)
             {
                 const Eigen::Matrix3d r12 = Eigen::AngleAxisd(q2, this->H.col(1).normalized()).toRotationMatrix();
-                SP1 sp1(p_13, this->P.col(1)+r12*this->P.col(2), -this->H.col(0));
+                SP1 sp1(p_13, this->P.col(1) + r12*this->P.col(2), -this->H.col(0));
                 sp1.solve();
-
-                solution_t_12.Q.push_back({sp1.get_theta(), q2});
-                solution_t_12.is_LS_vec.push_back(sp4.solution_is_ls()||sp1.solution_is_ls());
+                solution_t_12.Q.push_back({sp1.get_theta(),q2});
+                solution_t_12.is_LS_vec.push_back(sp3.solution_is_ls()||sp1.solution_is_ls());
             }
         }
 

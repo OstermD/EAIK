@@ -18,9 +18,11 @@ const Eigen::Vector3d ez(0, 0, 1);
 
 // NR Tests
 bool ik_test_7R_KUKA_R800();
+bool ik_test_7R_Panda();
 
 // 6R Tests
 bool ik_test_puma();
+bool ik_test_PUMA_DH();
 bool ik_test_IRB6640();
 bool ik_test_spherical();
 bool ik_test_puma_reversed();
@@ -75,21 +77,22 @@ double rand_angle()
 
 int main(int argc, char *argv[])
 {
-	// NR Tests (by joint locking)
 	bool allPass = true;
+	allPass &= ik_test_234_Parallel();
+
 	allPass &= ik_test_7R_Panda();
 	allPass &= ik_test_7R_KUKA_R800();
 	allPass &= ik_test_3R_PUMA_locked_wrist();
 	
 	// 6R Tests
 	allPass &= ik_test_puma();
+	allPass &= ik_test_PUMA_DH();
 	allPass &= ik_test_IRB6640();
 	allPass &= ik_test_spherical();
 	allPass &= ik_test_puma_reversed();
 	allPass &= ik_test_spherical_reversed();
 	allPass &= ik_test_IRB6640_reversed();
 
-	allPass &= ik_test_234_Parallel();
 	allPass &= ik_test_123_Parallel_56_Intersecting();
 	allPass &= ik_test_UR5();
 	allPass &= ik_test_two_Sphericals();
@@ -363,7 +366,7 @@ bool ik_test_3R_2_3_Parallel()
 	Eigen::Matrix<double, 3, 3> H;
 	H << ez, ex, ex;
 	Eigen::Matrix<double, 3, 4> P;
-	P << ez, ey, ey, ey;
+	P << ex, ez, ez, ez;
 
 	EAIK::Robot two_parallel(H, P);
 	
@@ -880,6 +883,28 @@ bool ik_test_puma()
 	}
 
 	return evaluate_test("IK spherical wrist - puma", spherical, ee_poses);
+}
+
+bool ik_test_PUMA_DH()
+{
+	// Robot configuration for PUMA 560 according to https://de.mathworks.com/help/robotics/ug/build-manipulator-robot-using-kinematic-dh-parameters.html
+	Eigen::VectorXd a(6);
+	a << 0, 0.4318, 0.0203, 0, 0, 0;
+	Eigen::VectorXd alpha(6);
+	alpha << M_PI/2, 0, -M_PI/2, M_PI/2, -M_PI/2, 0;
+	Eigen::VectorXd d(6);
+	d<< 0,0,0.15005, 0.4318, 0, 0;
+
+	EAIK::Robot puma560(alpha, a, d);
+
+	std::vector<IKS::Homogeneous_T> ee_poses;
+	ee_poses.reserve(BATCH_SIZE);
+	for (unsigned i = 0; i < BATCH_SIZE; i++)
+	{
+		ee_poses.push_back(puma560.fwdkin(std::vector{rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle()}));
+	}
+
+	return evaluate_test("IK 6R spherical wrist - Puma DH parametrized", puma560, ee_poses);
 }
 
 // Two spherical wrists
