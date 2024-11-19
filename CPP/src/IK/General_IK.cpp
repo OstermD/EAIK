@@ -9,6 +9,7 @@
 #include "utils/kinematic_utils.h"
 #include "kinematic_remodelling.h"
 
+
 namespace IKS
 {
     General_Robot::General_Robot(const Eigen::MatrixXd &H, const Eigen::MatrixXd &P)
@@ -93,7 +94,7 @@ namespace IKS
             const Eigen::MatrixXd P_reversed_remodelled = EAIK::remodel_kinematics(H_reversed, P_reversed, ZERO_THRESH, ZERO_THRESH);
 
             this->reversed_Robot_ptr = std::make_unique<General_6R>(H_reversed, P_reversed_remodelled);
-            return KinematicClass::THREE_INNER_PARALLEL_REVERSED;
+            return KinematicClass::REVERSED;
         }
         
         if (this->H.col(3).cross(this->H.col(4)).norm() < ZERO_THRESH &&
@@ -101,7 +102,7 @@ namespace IKS
                  this->H.col(4).cross(this->H.col(5)).norm() < ZERO_THRESH)
         {
             // h4 || h5 || h6
-            // (h1 x h1)(p12)==0) -> h1 intersects h1
+            // (h1 x h2)(p12)==0) -> h1 intersects h2
             // And 1 not parallel to 2 (h1 x h2 =/= 0)
             if(this->H.col(0).cross(this->H.col(1)).norm() >= ZERO_THRESH && 
             std::fabs(this->H.col(0).cross(this->H.col(1)).transpose() * this->P.col(1)) < ZERO_THRESH)
@@ -109,7 +110,64 @@ namespace IKS
                 // h3 || h4 || h5
                 const auto&[H_reversed, P_reversed] = reverse_kinematic_chain(this->H, this->P);
                 this->reversed_Robot_ptr = std::make_unique<General_6R>(H_reversed, P_reversed);
-                return KinematicClass::THREE_PARALLEL_TWO_INTERSECTING_REVERSED;
+                return KinematicClass::REVERSED;
+            }
+        }
+
+        //
+        //  Spherical Manipulators
+        //
+
+        // Check for spherical wrist
+        if (EAIK::do_axis_intersect(H.col(3), H.col(4), P.col(4), ZERO_THRESH, ZERO_THRESH))
+        {
+            const Eigen::Vector3d p04 = P.block<3,4>(0,0).rowwise().sum();
+            const Eigen::Vector3d intersection = EAIK::calc_intersection(H.col(3), H.col(4), p04,P.col(4), ZERO_THRESH);
+
+            if(EAIK::is_point_on_Axis(H.col(5), p04+P.col(4), intersection, ZERO_THRESH))
+            {
+                // Check for parallel axes
+                if (this->H.col(0).cross(this->H.col(1)).norm() < ZERO_THRESH)
+                {
+                    // 1 || 2
+                    return KinematicClass::SPHERICAL_FIRST_TWO_PARALLEL;
+                }
+
+                // Check for parallel axes
+                if (this->H.col(1).cross(this->H.col(2)).norm() < ZERO_THRESH)
+                {
+                    // 2 || 3
+                    return KinematicClass::SPHERICAL_FIRST_TWO_PARALLEL;
+                }
+
+                if (std::fabs(this->H.col(0).cross(this->H.col(1)).transpose() * this->P.col(1)) < ZERO_THRESH)
+                {
+                    // (h1 x h2)(p12)==0) -> h1 intersects h2
+                    return KinematicClass::SPHERICAL_FIRST_TWO_INTERSECTING;
+                }
+
+                if (std::fabs(this->H.col(1).cross(this->H.col(2)).transpose() * this->P.col(2)) < ZERO_THRESH)
+                {
+                    // (h2 x h3)(p23)==0) -> h2 intersects h3
+                    return KinematicClass::SPHERICAL_SECOND_TWO_INTERSECTING;
+                }
+
+                return KinematicClass::SPHERICAL_NO_PARALLEL_NO_INTERSECTING;
+            }
+
+        }
+        else if (EAIK::do_axis_intersect(H.col(0), H.col(1), P.col(1), ZERO_THRESH, ZERO_THRESH))
+        {
+            const Eigen::Vector3d intersection = EAIK::calc_intersection(H.col(0), H.col(1), P.col(0), P.col(1), ZERO_THRESH);
+
+            if(EAIK::is_point_on_Axis(H.col(2), P.col(0)+P.col(1), intersection, ZERO_THRESH))
+            {
+                const auto&[H_reversed, P_reversed] = reverse_kinematic_chain(this->H, this->P);
+                const Eigen::MatrixXd P_reversed_remodelled = EAIK::remodel_kinematics(H_reversed, P_reversed, ZERO_THRESH, ZERO_THRESH);
+
+                this->reversed_Robot_ptr = std::make_unique<General_6R>(H_reversed, P_reversed_remodelled);
+                // Spherical Wrist at the base of the robot
+                return KinematicClass::REVERSED;
             }
         }
 
@@ -182,20 +240,6 @@ namespace IKS
                             }
                         }
                     }
-                }
-                break;
-            };
-            case KinematicClass::THREE_PARALLEL_TWO_INTERSECTING_REVERSED:
-            {
-                if(reversed_Robot_ptr)
-                {
-                    // Use reversed kinematic chain and calculate IK for robot with h1 || h2 || h3
-                    solution = this->reversed_Robot_ptr->calculate_IK(inverse_homogeneous_T(ee_position_orientation));
-                    reverse_vector_second_dimension(solution.Q);
-                }
-                else
-                {
-                    throw std::runtime_error("Reversed kinematic chain was not initialized! Please open an issue on our GitHub repository.");
                 }
                 break;
             };
@@ -297,7 +341,205 @@ namespace IKS
                 }
                 break;
             };
-            case KinematicClass::THREE_INNER_PARALLEL_REVERSED:
+            case KinematicClass::SPHERICAL_FIRST_TWO_PARALLEL:
+            {
+                // Calculate "Position-IK":
+                std::vector<std::vector<double>> position_solutions;
+                std::vector<bool> position_solution_is_LS;
+
+                    // Axis 1 || Axis 2
+                SP4 sp4(this->H.col(0),
+                        this->P.col(3),
+                        this->H.col(2),
+                        this->H.col(0).transpose() * (p_16 - this->P.col(1) - this->P.col(2)));
+                sp4.solve();
+
+                const std::vector<double> &theta_3 = sp4.get_theta();
+                for (const auto &q3 : theta_3)
+                {
+                    Eigen::Matrix3d rot_3 = Eigen::AngleAxisd(q3, this->H.col(2).normalized()).toRotationMatrix();
+                    SP3 sp3(p_16,
+                            this->P.col(1),
+                            -this->H.col(0),
+                            (rot_3 * this->P.col(3) + this->P.col(2)).norm());
+                    sp3.solve();
+
+                    const std::vector<double> &theta_1 = sp3.get_theta();
+
+                    for (const auto &q1 : theta_1)
+                    {
+                        Eigen::Matrix3d rot_1_inv = Eigen::AngleAxisd(q1, -this->H.col(0).normalized()).toRotationMatrix();
+                        SP1 sp1(rot_3 * this->P.col(3) + this->P.col(2),
+                                rot_1_inv * p_16 - this->P.col(1),
+                                this->H.col(1));
+                        sp1.solve();
+                        const double &q2 = sp1.get_theta();
+                        position_solutions.push_back({q1, q2, q3});
+                        position_solution_is_LS.push_back(sp4.solution_is_ls() || sp3.solution_is_ls() || sp1.solution_is_ls());
+                    }
+                }
+                return calculate_Spherical_Wrist_Orientation_Kinematics(position_solutions, position_solution_is_LS, r_06);
+                break;
+            };
+
+            case KinematicClass::SPHERICAL_SECOND_TWO_PARALLEL:
+            {
+                // Calculate "Position-IK":
+                std::vector<std::vector<double>> position_solutions;
+                std::vector<bool> position_solution_is_LS;
+
+                // Axis 2 || Axis 3
+                SP4 sp4(this->H.col(1),
+                        p_16,
+                        -this->H.col(0),
+                        this->H.col(1).transpose() * (this->P.col(1) + this->P.col(2) + this->P.col(3)));
+                sp4.solve();
+
+                const std::vector<double> &theta_1 = sp4.get_theta();
+                for (const auto &q1 : theta_1)
+                {
+                    Eigen::Matrix3d rot_1 = Eigen::AngleAxisd(q1, -this->H.col(0).normalized()).toRotationMatrix();
+                    SP3 sp3(-this->P.col(3),
+                            this->P.col(2),
+                            this->H.col(2),
+                            (rot_1 * (-p_16) + this->P.col(1)).norm());
+                    sp3.solve();
+
+                    const std::vector<double> &theta_3 = sp3.get_theta();
+
+                    for (const auto &q3 : theta_3)
+                    {
+                        Eigen::Matrix3d rot_3 = Eigen::AngleAxisd(q3, this->H.col(2).normalized()).toRotationMatrix();
+                        SP1 sp1(-this->P.col(2) - rot_3 * this->P.col(3),
+                                rot_1 * (-p_16) + this->P.col(1),
+                                this->H.col(1));
+                        sp1.solve();
+                        const double &q2 = sp1.get_theta();
+                        position_solutions.push_back({q1, q2, q3});
+                        position_solution_is_LS.push_back(sp4.solution_is_ls() || sp3.solution_is_ls() || sp1.solution_is_ls());
+                    }
+                }
+                return calculate_Spherical_Wrist_Orientation_Kinematics(position_solutions, position_solution_is_LS, r_06);
+                break;
+            };
+
+            case KinematicClass::SPHERICAL_FIRST_TWO_INTERSECTING:
+            {
+                // Calculate "Position-IK":
+                std::vector<std::vector<double>> position_solutions;
+                std::vector<bool> position_solution_is_LS;
+
+                // (h1 x h2)(p12)==0) -> h1 intersects h2
+                SP3 sp3(this->P.col(3),
+                        -this->P.col(2),
+                        this->H.col(2),
+                        p_16.norm());
+
+                sp3.solve();
+
+                const std::vector<double> &theta_3 = sp3.get_theta();
+                for (const auto &q3 : theta_3)
+                {
+                    Eigen::Matrix3d rot_3 = Eigen::AngleAxisd(q3, this->H.col(2).normalized()).toRotationMatrix();
+                    SP2 sp2(p_16,
+                            this->P.col(2) + rot_3 * this->P.col(3),
+                            -this->H.col(0),
+                            this->H.col(1));
+                    sp2.solve();
+
+                    const std::vector<double> &theta_1 = sp2.get_theta_1();
+                    const std::vector<double> &theta_2 = sp2.get_theta_2();
+
+                    if (theta_1.size() != theta_2.size())
+                    {
+                        throw std::runtime_error("Incompatible number of solutions for theta1/2 in SP2!");
+                    }
+
+                    for (unsigned i = 0; i < theta_1.size(); i++)
+                    {
+                        position_solutions.push_back({theta_1.at(i), theta_2.at(i), q3});
+                        position_solution_is_LS.push_back(sp3.solution_is_ls() || sp2.solution_is_ls());
+                    }
+                }
+                return calculate_Spherical_Wrist_Orientation_Kinematics(position_solutions, position_solution_is_LS, r_06);
+                break;
+            };
+
+            case KinematicClass::SPHERICAL_SECOND_TWO_INTERSECTING:
+            {
+                // Calculate "Position-IK":
+                std::vector<std::vector<double>> position_solutions;
+                std::vector<bool> position_solution_is_LS;
+
+                // (h2 x h3)(p23)==0) -> h2 intersects h3
+                SP3 sp3(p_16,
+                        this->P.col(1),
+                        -this->H.col(0),
+                        this->P.col(3).norm());
+                sp3.solve();
+
+                const std::vector<double> &theta_1 = sp3.get_theta();
+                for (const auto &q1 : theta_1)
+                {
+                    Eigen::Matrix3d rot_1_inv = Eigen::AngleAxisd(q1, -this->H.col(0).normalized()).toRotationMatrix();
+                    SP2 sp2(rot_1_inv * p_16 - this->P.col(1),
+                            this->P.col(3),
+                            -this->H.col(1),
+                            this->H.col(2));
+                    sp2.solve();
+
+                    const std::vector<double> &theta_2 = sp2.get_theta_1();
+                    const std::vector<double> &theta_3 = sp2.get_theta_2();
+
+                    if (theta_2.size() != theta_3.size())
+                    {
+                        throw std::runtime_error("Incompatible number of solutions for theta1/2 in SP2!");
+                    }
+
+                    for (unsigned i = 0; i < theta_2.size(); i++)
+                    {
+                        position_solutions.push_back({q1, theta_2.at(i), theta_3.at(i)});
+                        position_solution_is_LS.push_back(sp3.solution_is_ls() || sp2.solution_is_ls());
+                    }
+                }
+                return calculate_Spherical_Wrist_Orientation_Kinematics(position_solutions, position_solution_is_LS, r_06);
+                break;
+            };
+
+            case KinematicClass::SPHERICAL_NO_PARALLEL_NO_INTERSECTING:
+            {
+                // Calculate "Position-IK":
+                std::vector<std::vector<double>> position_solutions;
+                std::vector<bool> position_solution_is_LS;
+
+                SP5 position_kinematics(-this->P.col(1),
+                                        p_16,
+                                        this->P.col(2),
+                                        this->P.col(3),
+                                        -this->H.col(0),
+                                        this->H.col(1),
+                                        this->H.col(2));
+                position_kinematics.solve();
+
+                const std::vector<double> &q1 = position_kinematics.get_theta_1();
+                const std::vector<double> &q2 = position_kinematics.get_theta_2();
+                const std::vector<double> &q3 = position_kinematics.get_theta_3();
+
+                if (q1.size() != q2.size() || q2.size() != q3.size())
+                {
+                    throw std::runtime_error("Invalid number of angle combinations gathered from SP5!");
+                }
+
+                for (unsigned i = 0; i < q1.size(); i++)
+                {
+                    position_solutions.push_back({q1.at(i), q2.at(i), q3.at(i)});
+                    position_solution_is_LS.push_back(position_kinematics.solution_is_ls());
+                }
+                return calculate_Spherical_Wrist_Orientation_Kinematics(position_solutions, position_solution_is_LS, r_06);
+                break;
+            };
+
+            case KinematicClass::REVERSED:
             {
                 if(reversed_Robot_ptr)
                 {
@@ -316,6 +558,50 @@ namespace IKS
                 std::cerr<< "The choosen manipulator has no known subproblem decomposition! The resulting solutions will be empty."<<std::endl;
         }
 
+        return solution;
+    }
+
+    IK_Solution General_6R::calculate_Spherical_Wrist_Orientation_Kinematics(const std::vector<std::vector<double>>& position_solutions, const std::vector<bool>& position_solution_is_LS, const Eigen::Matrix3d& r_06) const
+    {
+        IK_Solution solution;
+
+        // Solve "orientation IK"
+        for (unsigned i = 0; i < position_solutions.size(); i++) 
+        {
+            const auto& p_solution = position_solutions.at(i);
+            const double &q1 = p_solution.at(0);
+            const double &q2 = p_solution.at(1);
+            const double &q3 = p_solution.at(2);
+
+            Eigen::Matrix3d rot_1_inv = Eigen::AngleAxisd(q1, -this->H.col(0).normalized()).toRotationMatrix();
+            Eigen::Matrix3d rot_2_inv = Eigen::AngleAxisd(q2, -this->H.col(1).normalized()).toRotationMatrix();
+            Eigen::Matrix3d rot_3_inv = Eigen::AngleAxisd(q3, -this->H.col(2).normalized()).toRotationMatrix();
+
+            const Eigen::Matrix3d r_36 = rot_3_inv * rot_2_inv * rot_1_inv * r_06;
+
+            SP4 sp4(this->H.col(3),
+                    this->H.col(5),
+                    this->H.col(4),
+                    this->H.col(3).transpose() * r_36 * this->H.col(5));
+            sp4.solve();
+
+            const std::vector<double> &q5s = sp4.get_theta();
+
+            for (const auto &q5 : q5s)
+            {
+                Eigen::Matrix3d rot_5 = Eigen::AngleAxisd(q5, this->H.col(4).normalized()).toRotationMatrix();
+                SP1 sp1_q4(rot_5 * this->H.col(5),
+                           r_36 * this->H.col(5),
+                           this->H.col(3));
+                SP1 sp1_q6(rot_5.transpose() * this->H.col(3),
+                           r_36.transpose() * this->H.col(3),
+                           -this->H.col(5));
+                sp1_q4.solve();
+                sp1_q6.solve();
+                solution.Q.push_back({q1, q2, q3, sp1_q4.get_theta(), q5, sp1_q6.get_theta()});
+                solution.is_LS_vec.push_back(position_solution_is_LS.at(i) || sp4.solution_is_ls() || sp1_q4.solution_is_ls() || sp1_q6.solution_is_ls());
+            }
+        }
         return solution;
     }
 };

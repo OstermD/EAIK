@@ -57,28 +57,8 @@ namespace EAIK
         switch (H_remodelled.cols())
         {
         case 6:
-            // Check if last three axes intersect
-            if (P_remodelled.col(P_remodelled.cols()-3).norm() < ZERO_THRESHOLD && P_remodelled.col(P_remodelled.cols()-2).norm() < ZERO_THRESHOLD)
-            {   
-                spherical_wrist = true;
-                bot_kinematics = std::make_unique<IKS::Spherical_Wrist_Robot>(H_remodelled, P_remodelled);
-                original_kinematics = std::make_unique<IKS::General_Robot>(H, P);
-            }
-            else if(P_remodelled.col(1).norm() < ZERO_THRESHOLD && P_remodelled.col(2).norm() < ZERO_THRESHOLD)
-            {
-                // Spherical wrist is located at the base of the robot
-                spherical_wrist = true;
-                const auto&[H_reversed, P_reversed] = IKS::reverse_kinematic_chain(H_remodelled, P_remodelled);
-                const Eigen::MatrixXd  P_reversed_remodelled = remodel_kinematics(H_reversed, P_reversed, ZERO_THRESHOLD, AXIS_INTERSECT_THRESHOLD);
-
-                bot_kinematics = std::make_unique<IKS::Spherical_Wrist_Robot>(H_reversed, P_reversed_remodelled, true);
-                original_kinematics = std::make_unique<IKS::General_Robot>(H, P);
-            }
-            else 
-            {
-                bot_kinematics = std::make_unique<IKS::General_6R>(H_remodelled, P_remodelled);
-                original_kinematics = std::make_unique<IKS::General_Robot>(H, P);
-            }
+            bot_kinematics = std::make_unique<IKS::General_6R>(H_remodelled, P_remodelled);
+            original_kinematics = std::make_unique<IKS::General_Robot>(H, P);
             break;
         
         case 3:
