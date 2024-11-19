@@ -54,6 +54,11 @@ namespace IKS
         return false;
     }
 
+    bool General_Robot::is_spherical() const
+    {
+        return false;
+    }
+
     General_6R::General_6R(const Eigen::Matrix<double, 3, 6> &H, const Eigen::Matrix<double, 3, 7> &P)
         : General_Robot(H,P), H(H), P(P)
     {
@@ -178,6 +183,17 @@ namespace IKS
     bool General_6R::has_known_decomposition() const
     {
         return this->kinematicClass != KinematicClass::UNKNOWN;
+    }
+
+    bool General_6R::is_spherical() const
+    {
+        if (this->kinematicClass==KinematicClass::REVERSED)
+        {
+            return this->reversed_Robot_ptr->is_spherical();
+        }
+
+        return this->kinematicClass >= KinematicClass::SPHERICAL_FIRST_TWO_PARALLEL 
+                && this->kinematicClass <= KinematicClass::SPHERICAL_NO_PARALLEL_NO_INTERSECTING;
     }
 
     IK_Solution General_6R::calculate_IK(const Homogeneous_T &ee_position_orientation) const

@@ -32,7 +32,7 @@ namespace IKS
         virtual Homogeneous_T fwdkin(const std::vector<double> &Q) const final;
 
         virtual bool has_known_decomposition() const;
-
+        virtual bool is_spherical() const;
     private:
         Eigen::MatrixXd H;
         Eigen::MatrixXd P;
@@ -54,13 +54,13 @@ namespace IKS
 
     class General_6R : public General_Robot
     {
-        // 6DOF Robot kinematics with spherical wrist (3 consecutive intersecting axes at the endeffector)
+        // General 6R Manipulator
     public:
         General_6R(const Eigen::Matrix<double, 3, 6> &H, const Eigen::Matrix<double, 3, 7> &P);
         IK_Solution calculate_IK(const Homogeneous_T &ee_position_orientation) const override;
 
         bool has_known_decomposition() const override;
-
+        bool is_spherical() const override;
     private:
         enum KinematicClass
         {

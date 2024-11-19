@@ -213,7 +213,7 @@ namespace EAIK
     
     bool Robot::is_spherical() const
     {
-        return spherical_wrist;
+        return this->bot_kinematics->is_spherical();
     }
 
     bool Robot::has_known_decomposition() const
