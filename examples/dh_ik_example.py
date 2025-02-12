@@ -1,6 +1,6 @@
 import numpy as np
 
-from eaik.IK_DH import Robot
+from eaik.IK_DH import DhRobot
 
 """
 Example for a random robot kinematic
@@ -39,10 +39,10 @@ print(bot.hasKnownDecomposition())
 print(bot.fwdKin(np.array([1,1,1,1,1,1])))
 """
 
-# Spherical
-d = np.array([0, 1, 1, 0, 0, 0])
-alpha = np.array([-np.pi/2, 0, -np.pi/2, np.pi/2, -np.pi/2, 0])
-a = np.array([0, 1, 0, 1, 0, 1])
-bot = Robot(alpha, a, d)
+# Puma
+d = np.array([0.67183, 0.13970, 0, 0.43180, 0, 0.0565])
+alpha = np.array([-np.pi/2, 0, np.pi/2, -np.pi/2, np.pi/2, 0])
+a = np.array([0,0.43180, -0.02032, 0,0,0])
+bot = DhRobot(alpha, a, d)
 print(bot.hasKnownDecomposition())
 print(bot.fwdKin(np.array([1,1,1,1,1,1])))

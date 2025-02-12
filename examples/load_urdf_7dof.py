@@ -1,18 +1,15 @@
 import numpy as np
 import random
-from eaik.IK_URDF import Robot
+from eaik.IK_URDF import UrdfRobot
 import evaluate_ik as eval
-from urchin import URDF
-import time
 
 def ndof_example(path, batch_size):
     """
     Loads 7dof spherical-wrist robot from urdf, calculates IK using subproblems and checks the solution for a certian batch size
     """
     
-    # Lock axis 3 (index 2) at q3=2.14
     q3 = 0
-    bot = Robot(path, [(6, q3)], False)
+    bot = UrdfRobot(path, [(6, q3)])
     
     # Example desired pose
     test_angles = []

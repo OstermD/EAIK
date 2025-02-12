@@ -10,14 +10,12 @@ class UrdfRobot(IKRobot):
 
     def __init__(self,
                  file_path: str,
-                 fixed_axes: list[tuple[int, float]] = None,
-                 use_double_precision: bool = True):
+                 fixed_axes: list[tuple[int, float]] = None):
         """
         EAIK Robot parametrized by URDF file
 
         :param file_path: Path to URDF file
         :param fixed_axes: List of tuples defining fixed joints (zero-indexed) (i, q_i+1)
-        :param use_double_precision: Sets numerical zero-threshold for parametrization (EAIK internally uses double precision)
         """
         if fixed_axes is None:
             fixed_axes = []
@@ -36,12 +34,7 @@ class UrdfRobot(IKRobot):
             H = np.vstack([H, h])
             P = np.vstack([P, p])
             parent_p += p
-        
-        # Use numerical zero-threshold to "stabilize" solutions for single precision accuracy (experimental)
-        if not use_double_precision:
-            P = np.where(np.abs(P) < 1e-5, 0, P)
-            H = np.where(np.abs(H) < 1e-5, 0, H)
 
         # End effector displacement is (0,0,0)
         P = np.vstack([P, np.zeros(3)])
-        self._robot = EAIK.Robot(H.T, P.T, np.eye(3), fixed_axes, use_double_precision)
+        self._robot = EAIK.Robot(H.T, P.T, np.eye(3), fixed_axes, True)

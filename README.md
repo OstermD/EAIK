@@ -29,7 +29,7 @@ The current implementation supports automatic derivation of solutions for the fo
 </figure>
 In addition, we allow the user to solve arbitrary nR manipulators that, by locking individual joints, corrspond to one of the above kinematic families.
 
-We implement an user friendly interface for parametrizing a robot by a URDF file, DH parameters, or simply the homogeneous transformations that correspond to the joint axes placements (see src/eaik/examples).
+We implement an user friendly interface for parametrizing a robot by a URDF file, DH parameters, or simply the homogeneous transformations that correspond to the joint axes placements (see examples).
 
 If you require a vast amount of IK problems to be computed at once, we also implement a multithreaded batched version that allows you to make full use of processor.
 
@@ -66,7 +66,7 @@ pip install .
 
 ## Python examples
 Our goal is to make analytical IK as accessable as possible.
-You can find examples on how to use our toolbox within the "src/eaik/examples" directory. 
+You can find examples on how to use our toolbox within the "examples" directory. 
 The following examples are available:
 * load_urdf.py : A simple showcase how to parse a robot's representation from a URDF file and solve it's IK
 * load_urdf_7dof.py: Loads a 7R robot (e.g., the KUKA iiwa7 r800), locks one joint in place and finds analytical IK solutions for it

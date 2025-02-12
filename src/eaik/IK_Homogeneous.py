@@ -10,8 +10,7 @@ class HomogeneousRobot(IKRobot):
     def __init__(self,
                  joint_trafos: np.ndarray,
                  fixed_axes: list[tuple[int, float]] = None,
-                 joint_axis: np.array = np.array([0, 0, 1]),
-                 use_double_precision: bool = True):
+                 joint_axis: np.array = np.array([0, 0, 1])):
         """
         EAIK Robot parametrized by homogeneous joint transformations
 
@@ -19,8 +18,6 @@ class HomogeneousRobot(IKRobot):
             frame, i.e. (T01, T02, ..., T0EE)
         :param fixed_axes: List of tuples defining fixed joints (zero-indexed) (i, q_i+1)
         :param joint_axis: Unit vector of joint axis orientation within each frame in joint_trafos (e.g., z-axis)
-        :param use_double_precision: Sets numerical zero-threshold for parametrization (EAIK internally always uses
-            double precision)
         """
         super().__init__()
         if fixed_axes is None:
@@ -36,11 +33,6 @@ class HomogeneousRobot(IKRobot):
             H = np.vstack([H, h])
             P = np.vstack([P, p])
             parent_p += p
-            
-        # Use numerical zero-threshold to "stabilize" solutions for single precision accuracy (experimental)
-        if not use_double_precision:
-            P = np.where(np.abs(P) < 1e-5, 0, P)
-            H = np.where(np.abs(H) < 1e-5, 0, H)
             
         # Account for end effector pose
         p_EE = joint_trafos[-1][:-1, -1] - joint_trafos[-2][:-1, -1] # Translation in local joint-frame

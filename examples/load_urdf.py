@@ -1,13 +1,13 @@
 import numpy as np
 import random
-from eaik.IK_URDF import Robot
+from eaik.IK_URDF import UrdfRobot
 import evaluate_ik as eval
 
 def urdf_example(path, batch_size):
     """
     Loads spherical-wrist robot from urdf, calculates IK using subproblems and checks the solution for a certian batch size
     """
-    bot = Robot(path, [], False)
+    bot = UrdfRobot(path, [])
 
     # Example desired pose
     test_angles = []
@@ -35,4 +35,4 @@ def urdf_example(path, batch_size):
     print("Number analytical: ", len(poses)-total_num_ls)
     print("Number LS: ", total_num_ls)
             
-urdf_example("/home/daniel/Documents/robots/URDF/Puma560.urdf", 500)
+urdf_example("Puma560.urdf", 500)
