@@ -7,7 +7,7 @@
 #include "sp.h"
 #include "IKS.h"
 #include "utils/kinematic_utils.h"
-#include "kinematic_remodelling.h"
+#include "kinematic_remodeling.h"
 
 
 namespace IKS
@@ -65,6 +65,29 @@ namespace IKS
         this->kinematicClass = determine_Kinematic_Class();
     }
 
+    std::string General_6R::get_kinematic_family() const
+    {
+        switch (kinematicClass)
+        {
+        case KinematicClass::THREE_INNER_PARALLEL:
+            return std::string("6R-THREE_INNER_PARALLEL");
+        case KinematicClass::THREE_PARALLEL_TWO_INTERSECTING:
+            return std::string("6R-THREE_PARALLEL_TWO_INTERSECTING");
+        case KinematicClass::SPHERICAL_FIRST_TWO_PARALLEL:
+            return std::string("6R-SPHERICAL_FIRST_TWO_PARALLEL");
+        case KinematicClass::SPHERICAL_SECOND_TWO_PARALLEL:
+            return std::string("6R-SPHERICAL_SECOND_TWO_PARALLEL");
+        case KinematicClass::SPHERICAL_FIRST_TWO_INTERSECTING:
+            return std::string("6R-SPHERICAL_FIRST_TWO_INTERSECTING");
+        case KinematicClass::SPHERICAL_SECOND_TWO_INTERSECTING:
+            return std::string("6R-SPHERICAL_SECOND_TWO_INTERSECTING");
+        case KinematicClass::SPHERICAL_NO_PARALLEL_NO_INTERSECTING:
+            return std::string("6R-SPHERICAL_NO_PARALLEL_NO_INTERSECTING");
+        default:
+            return std::string("6R-Unknown Kinematic Class");
+        }
+    }
+
     General_6R::KinematicClass General_6R::determine_Kinematic_Class()
     {
         // Check for parallel axes
@@ -96,9 +119,9 @@ namespace IKS
         {
             // h3 || h4 || h5
             const auto&[H_reversed, P_reversed] = reverse_kinematic_chain(this->H, this->P);
-            const Eigen::MatrixXd P_reversed_remodelled = EAIK::remodel_kinematics(H_reversed, P_reversed, ZERO_THRESH, ZERO_THRESH);
+            const Eigen::MatrixXd P_reversed_remodeled = EAIK::remodel_kinematics(H_reversed, P_reversed, ZERO_THRESH, ZERO_THRESH);
 
-            this->reversed_Robot_ptr = std::make_unique<General_6R>(H_reversed, P_reversed_remodelled);
+            this->reversed_Robot_ptr = std::make_unique<General_6R>(H_reversed, P_reversed_remodeled);
             return KinematicClass::REVERSED;
         }
         
@@ -169,9 +192,9 @@ namespace IKS
             if(EAIK::is_point_on_Axis(H.col(2), P.col(0)+P.col(1)+P.col(2), intersection, ZERO_THRESH))
             {
                 const auto&[H_reversed, P_reversed] = reverse_kinematic_chain(this->H, this->P);
-                const Eigen::MatrixXd P_reversed_remodelled = EAIK::remodel_kinematics(H_reversed, P_reversed, ZERO_THRESH, ZERO_THRESH);
+                const Eigen::MatrixXd P_reversed_remodeled = EAIK::remodel_kinematics(H_reversed, P_reversed, ZERO_THRESH, ZERO_THRESH);
 
-                this->reversed_Robot_ptr = std::make_unique<General_6R>(H_reversed, P_reversed_remodelled);
+                this->reversed_Robot_ptr = std::make_unique<General_6R>(H_reversed, P_reversed_remodeled);
                 // Spherical Wrist at the base of the robot
                 return KinematicClass::REVERSED;
             }

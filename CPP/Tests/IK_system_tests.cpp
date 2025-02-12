@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "EAIK.h"
-#include "kinematic_remodelling.h"
+#include "kinematic_remodeling.h"
 
 #define ERROR_PASS_EPSILON 1e-5
 #define BATCH_SIZE 100

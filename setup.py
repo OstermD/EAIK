@@ -10,7 +10,7 @@ ext_modules = [
                 "CPP/src/IK/6R_IK.cpp",
                 "CPP/src/IK/3R_IK.cpp",
                 "CPP/src/EAIK.cpp",
-                "CPP/src/utils/kinematic_remodelling.cpp",
+                "CPP/src/utils/kinematic_remodeling.cpp",
                 "CPP/external/ik-geo/cpp/subproblems/sp.cpp")),
         include_dirs=['CPP/external/ik-geo/cpp/subproblems','CPP/src/IK','CPP/src/IK/utils','CPP/src','CPP/src/utils','/usr/include/eigen3', '/usr/local/include/eigen3'],
         extra_compile_args=['-std=c++17']

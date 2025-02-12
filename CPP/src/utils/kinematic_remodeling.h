@@ -1,5 +1,5 @@
-#ifndef KINEMATIC_REMODELLING
-#define KINEMATIC_REMODELLING
+#ifndef KINEMATIC_REMODELING
+#define KINEMATIC_REMODELING
 
 #include <eigen3/Eigen/Dense>
 #include <vector>

@@ -33,6 +33,26 @@ class IKRobot(ABC):
         """Is true iff there is a geometric decomposition that allows solving IK for this robot."""
         return self._robot.has_known_decomposition()
 
+    def kinematicFamily(self) -> str:
+        """Returns information on the kinematic family of the robot."""
+        return self._robot.kinematicFamily()
+
+    def H_remodeled(self) -> np.ndarray:
+        """Returns the joint axes of this robot after kinematic remodeling"""
+        return self._robot.H_remodeled()
+
+    def P_remodeled(self) -> np.ndarray:
+        """Returns the joint axes' reference points for this robot after kinematic remodeling"""
+        return self._robot.P_remodeled()
+
+    def H_original(self) -> np.ndarray:
+        """Returns the original joint axes of this robot before kinematic remodeling"""
+        return self._robot.H_original()
+
+    def P_original(self) -> np.ndarray:
+        """Returns the original joint axes' reference points for this robot before kinematic remodeling"""
+        return self._robot.P_original()
+
     def fwdKin(self, q: np.array) -> np.ndarray:
         """Calculate the forward kinematics for a given joint configuration"""
         return self._robot.fwdkin(q)

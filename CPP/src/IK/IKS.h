@@ -33,6 +33,12 @@ namespace IKS
 
         virtual bool has_known_decomposition() const;
         virtual bool is_spherical() const;
+
+        virtual Eigen::MatrixXd get_H() const final { return H; }
+        virtual Eigen::MatrixXd get_P() const final { return P; }
+
+        virtual std::string get_kinematic_family() const { return std::string("Unknown"); }
+
     private:
         Eigen::MatrixXd H;
         Eigen::MatrixXd P;
@@ -46,6 +52,8 @@ namespace IKS
         IK_Solution calculate_IK(const Homogeneous_T &ee_position_orientation) const override;
 
         bool has_known_decomposition() const override { return true; }
+
+        std::string get_kinematic_family() const override { return std::string("3R"); }
 
     private:
         Eigen::Matrix<double, 3, 3> H;
@@ -61,6 +69,9 @@ namespace IKS
 
         bool has_known_decomposition() const override;
         bool is_spherical() const override;
+
+        std::string get_kinematic_family() const override;
+
     private:
         enum KinematicClass
         {

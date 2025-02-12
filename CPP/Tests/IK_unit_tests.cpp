@@ -7,7 +7,7 @@
 
 #include "IKS.h"
 #include "kinematic_utils.h"
-#include "kinematic_remodelling.h"
+#include "kinematic_remodeling.h"
 
 #define ERROR_PASS_EPSILON 1e-6
 #define BATCH_SIZE 100
