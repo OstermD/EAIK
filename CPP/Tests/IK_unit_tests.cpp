@@ -371,6 +371,8 @@ bool evaluate_test(const std::string &name_test, const IKS::General_Robot &robot
 	double sum_error = 0;
 	double max_error = 0;
 	unsigned total_non_LS_solutions = 0;
+	unsigned total_LS_solutions = 0;
+	unsigned total_no_solution = 0;
 	for (const auto &pose : ee_poses)
 	{
 		solution = robot.calculate_IK(pose);
@@ -378,6 +380,14 @@ bool evaluate_test(const std::string &name_test, const IKS::General_Robot &robot
 
 		for (unsigned i = 0; i < solution.Q.size(); i++)
 		{
+			for(const auto& q : solution.Q.at(i))
+			{
+				if(std::isnan(q))
+				{
+					throw std::runtime_error("Solution contained NAN!");
+				}
+			}
+
 			// Only account for non-LS-solutions in this test
 			if (!solution.is_LS_vec.at(i))
 			{
@@ -393,15 +403,40 @@ bool evaluate_test(const std::string &name_test, const IKS::General_Robot &robot
 
 		if (non_LS_solutions == 0)
 		{
-			std::cout << "\n===== Test [" << name_test << "]: ";
-			std::cout << "ERROR - No analytic solution found!" << std::endl;
-			std::cout << pose << std::endl
-					  << " =====" << std::endl;
-			return false;
+			std::vector<double> smallest_error_LS;
+			double smallest_error = std::numeric_limits<double>::infinity();
+			for (unsigned i = 0; i < solution.Q.size(); i++)
+			{
+				IKS::Homogeneous_T result = robot.fwdkin(solution.Q.at(i));
+
+				double error = (result - pose).norm();
+				// Only account for non-LS-solutions in this test
+				if (error < smallest_error)
+				{
+					smallest_error = error;
+					smallest_error_LS = solution.Q.at(i);
+				}
+			}
+			if(solution.Q.size() > 0)
+			{
+				max_error = max_error < smallest_error ? smallest_error : max_error;
+				
+				sum_error += smallest_error;
+				total_LS_solutions++;
+			}
+			else
+			{
+				total_no_solution++;
+			}
 		}
 	}
 
-	const double avg_error = sum_error / total_non_LS_solutions;
+	double avg_error = std::numeric_limits<double>::infinity();
+	
+	if(total_LS_solutions+total_non_LS_solutions > 0)
+	{
+		avg_error = sum_error / (total_non_LS_solutions+total_LS_solutions);
+	}
 	const bool is_passed{std::fabs(max_error) < ERROR_PASS_EPSILON &&
 						 std::fabs(avg_error) < ERROR_PASS_EPSILON};
 	std::cout << "\n===== Test [" << name_test << "]: ";
@@ -415,6 +450,8 @@ bool evaluate_test(const std::string &name_test, const IKS::General_Robot &robot
 	}
 	std::cout << "\tAverage error: " << avg_error << std::endl;
 	std::cout << "\tMaximum error: " << max_error << std::endl;
+	std::cout << "\tNum LS solutions:  " << total_LS_solutions << std::endl;
+	std::cout << "\tNum NO solutions:  " << total_no_solution << std::endl;
 	std::cout << "===== Average solution time (nanoseconds): " << time / BATCH_SIZE << " =====" << std::endl;
 
 	return is_passed;

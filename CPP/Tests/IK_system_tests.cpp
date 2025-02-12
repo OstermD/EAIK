@@ -953,6 +953,7 @@ bool evaluate_test(const std::string &name_test, const EAIK::Robot &robot, const
 	double max_error = 0;
 	unsigned total_non_LS_solutions = 0;
 	unsigned total_LS_solutions = 0;
+	unsigned total_no_solution = 0;
 	for (const auto &pose : ee_poses)
 	{
 		solution = robot.calculate_IK(pose);
@@ -1004,7 +1005,10 @@ bool evaluate_test(const std::string &name_test, const EAIK::Robot &robot, const
 				sum_error += smallest_error;
 				total_LS_solutions++;
 			}
-
+			else
+			{
+				total_no_solution++;
+			}
 		}
 	}
 
@@ -1028,6 +1032,7 @@ bool evaluate_test(const std::string &name_test, const EAIK::Robot &robot, const
 	std::cout << "\tAverage error: " << avg_error << std::endl;
 	std::cout << "\tMaximum error: " << max_error << std::endl;
 	std::cout << "\tNum LS solutions:  " << total_LS_solutions << std::endl;
+	std::cout << "\tNum NO solutions:  " << total_no_solution << std::endl;
 	std::cout << "===== Average solution time (nanoseconds): " << time / BATCH_SIZE << " =====" << std::endl;
 
 	return is_passed;

@@ -124,12 +124,12 @@ namespace IKS
         //
 
         // Check for spherical wrist
-        if (EAIK::do_axis_intersect(H.col(3), H.col(4), P.col(4), ZERO_THRESH, ZERO_THRESH))
+        if (EAIK::do_axis_intersect(H.col(3), H.col(4), P.col(4), ZERO_THRESH, 1e-8))
         {
             const Eigen::Vector3d p04 = P.block<3,4>(0,0).rowwise().sum();
-            const Eigen::Vector3d intersection = EAIK::calc_intersection(H.col(3), H.col(4), p04,P.col(4), ZERO_THRESH);
+            const Eigen::Vector3d intersection = EAIK::calc_intersection(H.col(3), H.col(4), p04,P.col(4), 1e-8);
 
-            if(EAIK::is_point_on_Axis(H.col(5), p04+P.col(4)+P.col(5), intersection, ZERO_THRESH))
+            if(EAIK::is_point_on_Axis(H.col(5), p04+P.col(4)+P.col(5), intersection, 1e-8))
             {
                 // Check for parallel axes
                 if (this->H.col(0).cross(this->H.col(1)).norm() < ZERO_THRESH)
@@ -176,7 +176,6 @@ namespace IKS
                 return KinematicClass::REVERSED;
             }
         }
-
         return KinematicClass::UNKNOWN;   
     }
 

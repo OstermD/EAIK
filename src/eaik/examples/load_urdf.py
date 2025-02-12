@@ -20,6 +20,7 @@ def urdf_example(path, batch_size):
        poses.append(bot.fwdKin(angles))
         
     sum_pos_error = np.array([0.,0.,0.])
+    sum_rot_error = np.array([0.,0.,0.])
     total_num_ls = 0
     for pose in poses:
         ik_solution = bot.IK(pose)
@@ -28,8 +29,10 @@ def urdf_example(path, batch_size):
             # LS solution
             total_num_ls += 1
         sum_pos_error+=error_sum_pos
+        sum_rot_error+=error_sum_rot
+    print("Avg. Orientation Error: ", sum_rot_error/len(poses))
     print("Avg. Position Error: ", sum_pos_error/len(poses))
     print("Number analytical: ", len(poses)-total_num_ls)
     print("Number LS: ", total_num_ls)
             
-urdf_example("Puma560.urdf", 500)
+urdf_example("/home/daniel/Documents/robots/URDF/Puma560.urdf", 500)
