@@ -124,12 +124,12 @@ namespace IKS
         //
 
         // Check for spherical wrist
-        if (EAIK::do_axis_intersect(H.col(3), H.col(4), P.col(4), ZERO_THRESH, 1e-8))
+        if (EAIK::do_axis_intersect(H.col(3), H.col(4), P.col(4), ZERO_THRESH, ZERO_THRESH))
         {
             const Eigen::Vector3d p04 = P.block<3,4>(0,0).rowwise().sum();
-            const Eigen::Vector3d intersection = EAIK::calc_intersection(H.col(3), H.col(4), p04,P.col(4), 1e-8);
+            const Eigen::Vector3d intersection = EAIK::calc_intersection(H.col(3), H.col(4), p04,P.col(4), ZERO_THRESH);
 
-            if(EAIK::is_point_on_Axis(H.col(5), p04+P.col(4)+P.col(5), intersection, 1e-8))
+            if(EAIK::is_point_on_Axis(H.col(5), p04+P.col(4)+P.col(5), intersection, ZERO_THRESH))
             {
                 // Check for parallel axes
                 if (this->H.col(0).cross(this->H.col(1)).norm() < ZERO_THRESH)
@@ -166,7 +166,7 @@ namespace IKS
         {
             const Eigen::Vector3d intersection = EAIK::calc_intersection(H.col(0), H.col(1), P.col(0), P.col(1), ZERO_THRESH);
 
-            if(EAIK::is_point_on_Axis(H.col(2), P.col(0)+P.col(1), intersection, ZERO_THRESH))
+            if(EAIK::is_point_on_Axis(H.col(2), P.col(0)+P.col(1)+P.col(2), intersection, ZERO_THRESH))
             {
                 const auto&[H_reversed, P_reversed] = reverse_kinematic_chain(this->H, this->P);
                 const Eigen::MatrixXd P_reversed_remodelled = EAIK::remodel_kinematics(H_reversed, P_reversed, ZERO_THRESH, ZERO_THRESH);
