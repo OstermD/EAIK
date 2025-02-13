@@ -21,8 +21,8 @@ dependencies = [
     "pybind11 >= 2.10.0",
     "pybind11-stubgen >= 0.13.0",
 ]
-requires-python = ">=3.8"
-version="1.0.1"
+requires-python = ">=3.9"
+version="1.1.0"
 
 [project.urls]
 Homepage = "https://github.com/OstermD/EAIK"

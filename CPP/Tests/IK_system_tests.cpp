@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "EAIK.h"
-#include "kinematic_remodelling.h"
+#include "kinematic_remodeling.h"
 
 #define ERROR_PASS_EPSILON 1e-5
 #define BATCH_SIZE 100
@@ -18,9 +18,11 @@ const Eigen::Vector3d ez(0, 0, 1);
 
 // NR Tests
 bool ik_test_7R_KUKA_R800();
+bool ik_test_7R_Panda();
 
 // 6R Tests
 bool ik_test_puma();
+bool ik_test_PUMA_DH();
 bool ik_test_IRB6640();
 bool ik_test_spherical();
 bool ik_test_puma_reversed();
@@ -75,46 +77,59 @@ double rand_angle()
 
 int main(int argc, char *argv[])
 {
-	// NR Tests (by joint locking)
-	ik_test_7R_KUKA_R800();
-	ik_test_3R_PUMA_locked_wrist();
+	bool allPass = true;
+	allPass &= ik_test_234_Parallel();
 
+	allPass &= ik_test_7R_Panda();
+	allPass &= ik_test_7R_KUKA_R800();
+	allPass &= ik_test_3R_PUMA_locked_wrist();
+	
 	// 6R Tests
-	ik_test_puma();
-	ik_test_IRB6640();
-	ik_test_spherical();
-	ik_test_puma_reversed();
-	ik_test_spherical_reversed();
-	ik_test_IRB6640_reversed();
+	allPass &= ik_test_puma();
+	allPass &= ik_test_PUMA_DH();
+	allPass &= ik_test_IRB6640();
+	allPass &= ik_test_spherical();
+	allPass &= ik_test_puma_reversed();
+	allPass &= ik_test_spherical_reversed();
+	allPass &= ik_test_IRB6640_reversed();
 
-	ik_test_234_Parallel();
-	//ik_test_123_Parallel(); Not yet implemented
-	ik_test_123_Parallel_56_Intersecting();
-	ik_test_UR5();
-	ik_test_two_Sphericals();
+	allPass &= ik_test_123_Parallel_56_Intersecting();
+	allPass &= ik_test_UR5();
+	allPass &= ik_test_two_Sphericals();
 
-	ik_test_345_Parallel();
-	//ik_test_456_Parallel(); Not yet implemented
-	ik_test_456_Parallel_12_Intersecting();
-	ik_test_345_Parallel();
+	allPass &= ik_test_345_Parallel();
+	allPass &= ik_test_456_Parallel_12_Intersecting();
 
 	//// 3R Tests
-	ik_test_3R_1_2_Parallel();
-	ik_test_3R_2_3_Parallel();
-	ik_test_3R_1_2_intersecting_2_3_parallel();
-	ik_test_3R_1_2_Parallel_2_3_intersecting();
-	ik_test_3R_generic();
-	ik_test_3R_1_2_intersecting();
-	ik_test_3R_2_3_intersecting();
-	ik_test_3R_1_2_intersecting_2_3_intersecting();
-	ik_test_3R_1_2_3_intersecting();
-	ik_test_3R_1_2_3_intersecting_2();
-	ik_test_3R_1_2_3_parallel();
-	ik_test_3R_1_2_3_parallel_2();
+	allPass &= ik_test_3R_1_2_Parallel();
+	allPass &= ik_test_3R_2_3_Parallel();
+	allPass &= ik_test_3R_1_2_intersecting_2_3_parallel();
+	allPass &= ik_test_3R_1_2_Parallel_2_3_intersecting();
+	allPass &= ik_test_3R_generic();
+	allPass &= ik_test_3R_1_2_intersecting();
+	allPass &= ik_test_3R_2_3_intersecting();
+	allPass &= ik_test_3R_1_2_intersecting_2_3_intersecting();
+	allPass &= ik_test_3R_1_2_3_intersecting();
+	allPass &= ik_test_3R_1_2_3_intersecting_2();
+	allPass &= ik_test_3R_1_2_3_parallel();
+	allPass &= ik_test_3R_1_2_3_parallel_2();
 
 	// I/O Tests
-	test_eigen_IO();
-	test_batched_IK();
+	allPass &= test_eigen_IO();
+	allPass &= test_batched_IK();
+
+	std::cout<< std::endl<<"====================== RESULT: ======================"<<std::endl;
+
+	if(allPass)
+	{
+		std::cout<< "                     ALL PASSING                     "<<std::endl;
+	}
+	else
+	{
+		std::cout<< "                     SOME FAILED                     "<<std::endl;
+	}
+
+	std::cout<< "==================================================="<<std::endl;
 
 	return 0;
 }
@@ -251,6 +266,28 @@ bool test_eigen_IO()
 // NR Tests (by Joint locking)
 //
 
+bool ik_test_7R_Panda()
+{
+	// Robot configuration for Franka Panda
+	Eigen::Matrix<double, 3, 7> H;
+	H << ez, ey, ez, -ey, ez, -ey, -ez;
+	Eigen::Matrix<double, 3, 8> P;
+	P << 0.333 * ez, zv, 0.316 * ez, 0.0825*ex, - 0.0825*ex + 0.384 * ez, zv, 0.088*ex, zv;
+
+	// Panda with q4 locked in random configuration
+	double q4_angle = 0;//rand_angle();
+	EAIK::Robot panda(H, P, Eigen::Matrix<double, 3, 3>::Identity(), {std::pair<int, double>(3, q4_angle)});
+
+	std::vector<IKS::Homogeneous_T> ee_poses;
+	ee_poses.reserve(BATCH_SIZE);
+	for (unsigned i = 0; i < BATCH_SIZE; i++)
+	{
+		ee_poses.push_back(panda.fwdkin(std::vector{rand_angle(), rand_angle(), rand_angle(), q4_angle, rand_angle(), rand_angle(), rand_angle()}));
+	}
+
+	return evaluate_test("IK 7R spherical wrist - Panda", panda, ee_poses);
+}
+
 
 bool ik_test_7R_KUKA_R800()
 {
@@ -329,7 +366,7 @@ bool ik_test_3R_2_3_Parallel()
 	Eigen::Matrix<double, 3, 3> H;
 	H << ez, ex, ex;
 	Eigen::Matrix<double, 3, 4> P;
-	P << ez, ey, ey, ey;
+	P << ex, ez, ez, ez;
 
 	EAIK::Robot two_parallel(H, P);
 	
@@ -848,6 +885,28 @@ bool ik_test_puma()
 	return evaluate_test("IK spherical wrist - puma", spherical, ee_poses);
 }
 
+bool ik_test_PUMA_DH()
+{
+	// Robot configuration for PUMA 560 according to https://de.mathworks.com/help/robotics/ug/build-manipulator-robot-using-kinematic-dh-parameters.html
+	Eigen::VectorXd a(6);
+	a << 0, 0.4318, 0.0203, 0, 0, 0;
+	Eigen::VectorXd alpha(6);
+	alpha << M_PI/2, 0, -M_PI/2, M_PI/2, -M_PI/2, 0;
+	Eigen::VectorXd d(6);
+	d<< 0,0,0.15005, 0.4318, 0, 0;
+
+	EAIK::Robot puma560(alpha, a, d);
+
+	std::vector<IKS::Homogeneous_T> ee_poses;
+	ee_poses.reserve(BATCH_SIZE);
+	for (unsigned i = 0; i < BATCH_SIZE; i++)
+	{
+		ee_poses.push_back(puma560.fwdkin(std::vector{rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle()}));
+	}
+
+	return evaluate_test("IK 6R spherical wrist - Puma DH parametrized", puma560, ee_poses);
+}
+
 // Two spherical wrists
 bool ik_test_two_Sphericals()
 {
@@ -894,6 +953,7 @@ bool evaluate_test(const std::string &name_test, const EAIK::Robot &robot, const
 	double max_error = 0;
 	unsigned total_non_LS_solutions = 0;
 	unsigned total_LS_solutions = 0;
+	unsigned total_no_solution = 0;
 	for (const auto &pose : ee_poses)
 	{
 		solution = robot.calculate_IK(pose);
@@ -901,6 +961,14 @@ bool evaluate_test(const std::string &name_test, const EAIK::Robot &robot, const
 
 		for (unsigned i = 0; i < solution.Q.size(); i++)
 		{
+			for(const auto& q : solution.Q.at(i))
+			{
+				if(std::isnan(q))
+				{
+					throw std::runtime_error("Solution contained NAN!");
+				}
+			}
+
 			// Only account for non-LS-solutions in this test
 			if (!solution.is_LS_vec.at(i))
 			{
@@ -921,6 +989,7 @@ bool evaluate_test(const std::string &name_test, const EAIK::Robot &robot, const
 			for (unsigned i = 0; i < solution.Q.size(); i++)
 			{
 				IKS::Homogeneous_T result = robot.fwdkin(solution.Q.at(i));
+
 				double error = (result - pose).norm();
 				// Only account for non-LS-solutions in this test
 				if (error < smallest_error)
@@ -936,7 +1005,10 @@ bool evaluate_test(const std::string &name_test, const EAIK::Robot &robot, const
 				sum_error += smallest_error;
 				total_LS_solutions++;
 			}
-
+			else
+			{
+				total_no_solution++;
+			}
 		}
 	}
 
@@ -960,6 +1032,7 @@ bool evaluate_test(const std::string &name_test, const EAIK::Robot &robot, const
 	std::cout << "\tAverage error: " << avg_error << std::endl;
 	std::cout << "\tMaximum error: " << max_error << std::endl;
 	std::cout << "\tNum LS solutions:  " << total_LS_solutions << std::endl;
+	std::cout << "\tNum NO solutions:  " << total_no_solution << std::endl;
 	std::cout << "===== Average solution time (nanoseconds): " << time / BATCH_SIZE << " =====" << std::endl;
 
 	return is_passed;

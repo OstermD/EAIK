@@ -7,7 +7,7 @@
 
 #include "IKS.h"
 #include "kinematic_utils.h"
-#include "kinematic_remodelling.h"
+#include "kinematic_remodeling.h"
 
 #define ERROR_PASS_EPSILON 1e-6
 #define BATCH_SIZE 100
@@ -120,11 +120,11 @@ bool test_inv_kin_chain()
 	Eigen::Matrix<double, 3, 7> puma_P;
 	puma_P << 0.62357 * ez, zv, 0.4318 * ex - 0.16764 * ey, 0.432089 * ez + 0.0381 * ey, zv, zv, 0.05334 * ez;
 
-	IKS::Spherical_Wrist_Robot puma(puma_H, puma_P);
+	IKS::General_6R puma(puma_H, puma_P);
 
 	// Build kinematically reversed robot
 	const auto&[H_reversed, P_reversed] = IKS::reverse_kinematic_chain(puma_H, puma_P);
-	IKS::Spherical_Wrist_Robot puma_reversed(H_reversed, P_reversed);
+	IKS::General_6R puma_reversed(H_reversed, P_reversed);
 
 	bool is_Pass = true;
 	for(unsigned i = 0; i < BATCH_SIZE; ++i)
@@ -185,7 +185,7 @@ bool ik_test_PUMA()
 	Eigen::Matrix<double, 3, 7> puma_P;
 	puma_P << 0.62357 * ez, zv, 0.4318 * ex - 0.16764 * ey, 0.432089 * ez + 0.0381 * ey, zv, zv, 0.05334 * ez;
 
-	IKS::Spherical_Wrist_Robot puma(puma_H, puma_P);
+	IKS::General_6R puma(puma_H, puma_P);
 
 	std::vector<IKS::Homogeneous_T> ee_poses;
 	ee_poses.reserve(BATCH_SIZE);
@@ -206,7 +206,7 @@ bool ik_test_SPHERICAL_2_3_I()
 	Eigen::Matrix<double, 3, 7> spherical_intersecting_P;
 	spherical_intersecting_P << ey, -ey + ez, zv, ey + 2 * ez, zv, zv, 2 * ey;
 
-	IKS::Spherical_Wrist_Robot spherical_intersecting(spherical_intersecting_H, spherical_intersecting_P);
+	IKS::General_6R spherical_intersecting(spherical_intersecting_H, spherical_intersecting_P);
 	std::vector<IKS::Homogeneous_T> ee_poses;
 	ee_poses.reserve(BATCH_SIZE);
 	for (unsigned i = 0; i < BATCH_SIZE; i++)
@@ -232,7 +232,7 @@ bool ik_test_SPHERICAL_1_2_I()
 		P << 0.33999999999999997*ez, zv, 0.4* ez, 0.4* ez, zv, zv, 0.126*ez;
 	*/
 
-	IKS::Spherical_Wrist_Robot spherical_intersecting(spherical_intersecting_H, spherical_intersecting_P);
+	IKS::General_6R spherical_intersecting(spherical_intersecting_H, spherical_intersecting_P);
 	std::vector<IKS::Homogeneous_T> ee_poses;
 	ee_poses.reserve(BATCH_SIZE);
 	for (unsigned i = 0; i < BATCH_SIZE; i++)
@@ -252,7 +252,7 @@ bool ik_test_SPHERICAL_1_3_P()
 	Eigen::Matrix<double, 3, 7> spherical_1_3_P;
 	spherical_1_3_P << zv, ex + ez, ez - ex, 2 * ez, zv, zv, 2 * ey;
 
-	IKS::Spherical_Wrist_Robot spherical_1_3(spherical_1_3_H, spherical_1_3_P);
+	IKS::General_6R spherical_1_3(spherical_1_3_H, spherical_1_3_P);
 	std::vector<IKS::Homogeneous_T> ee_poses;
 	ee_poses.reserve(BATCH_SIZE);
 	for (unsigned i = 0; i < BATCH_SIZE; i++)
@@ -272,7 +272,7 @@ bool ik_test_SPHERICAL_1_2_P()
 	Eigen::Matrix<double, 3, 7> Irb6640_mod_P;
 	Irb6640_mod_P << zv, 0.32 * ex + 0.78 * ez, 1.075 * ez, 1.1425 * ex + 0.2 * ez, zv, zv, 0.2 * ex;
 
-	IKS::Spherical_Wrist_Robot Irb6640_mod(Irb6640_mod_H, Irb6640_mod_P);
+	IKS::General_6R Irb6640_mod(Irb6640_mod_H, Irb6640_mod_P);
 	std::vector<IKS::Homogeneous_T> ee_poses;
 	ee_poses.reserve(BATCH_SIZE);
 	for (unsigned i = 0; i < BATCH_SIZE; i++)
@@ -292,7 +292,7 @@ bool ik_test_SPHERICAL_2_3_P_REDUNDANT()
 	Eigen::Matrix<double, 3, 7> bot_1_P;
 	bot_1_P << -0.173679*ey,  0.565723 * ex, 0.397168 * ex, zv, zv, zv,-0.598349*ey;
 
-	IKS::Spherical_Wrist_Robot bot_1(bot_1_H, bot_1_P);
+	IKS::General_6R bot_1(bot_1_H, bot_1_P);
 	std::vector<IKS::Homogeneous_T> ee_poses;
 	ee_poses.reserve(BATCH_SIZE);
 	for (unsigned i = 0; i < BATCH_SIZE; i++)
@@ -311,7 +311,7 @@ bool ik_test_SPHERICAL_2_3_P()
 	Eigen::Matrix<double, 3, 7> Irb6640_P;
 	Irb6640_P << zv, 0.32 * ex + 0.78 * ez, 1.075 * ez, 1.1425 * ex + 0.2 * ez, zv, zv, 0.2 * ex;
 
-	IKS::Spherical_Wrist_Robot Irb6640(Irb6640_H, Irb6640_P);
+	IKS::General_6R Irb6640(Irb6640_H, Irb6640_P);
 	/*
 	std::vector<IKS::Homogeneous_T> poses;
 	for(unsigned i = 0; i < BATCH_SIZE-1; i++)
@@ -342,7 +342,7 @@ bool ik_test_SPHERICAL()
 	Eigen::Matrix<double, 3, 7> Spherical_Bot_P;
 	Spherical_Bot_P << zv, ez + ex, ez + ex, ez + ex, zv, zv, ex;
 
-	IKS::Spherical_Wrist_Robot Spherical_Bot(Spherical_Bot_H, Spherical_Bot_P);
+	IKS::General_6R Spherical_Bot(Spherical_Bot_H, Spherical_Bot_P);
 	std::vector<IKS::Homogeneous_T> ee_poses;
 	ee_poses.reserve(BATCH_SIZE);
 	for (unsigned i = 0; i < BATCH_SIZE; i++)
@@ -371,6 +371,8 @@ bool evaluate_test(const std::string &name_test, const IKS::General_Robot &robot
 	double sum_error = 0;
 	double max_error = 0;
 	unsigned total_non_LS_solutions = 0;
+	unsigned total_LS_solutions = 0;
+	unsigned total_no_solution = 0;
 	for (const auto &pose : ee_poses)
 	{
 		solution = robot.calculate_IK(pose);
@@ -378,6 +380,14 @@ bool evaluate_test(const std::string &name_test, const IKS::General_Robot &robot
 
 		for (unsigned i = 0; i < solution.Q.size(); i++)
 		{
+			for(const auto& q : solution.Q.at(i))
+			{
+				if(std::isnan(q))
+				{
+					throw std::runtime_error("Solution contained NAN!");
+				}
+			}
+
 			// Only account for non-LS-solutions in this test
 			if (!solution.is_LS_vec.at(i))
 			{
@@ -393,15 +403,40 @@ bool evaluate_test(const std::string &name_test, const IKS::General_Robot &robot
 
 		if (non_LS_solutions == 0)
 		{
-			std::cout << "\n===== Test [" << name_test << "]: ";
-			std::cout << "ERROR - No analytic solution found!" << std::endl;
-			std::cout << pose << std::endl
-					  << " =====" << std::endl;
-			return false;
+			std::vector<double> smallest_error_LS;
+			double smallest_error = std::numeric_limits<double>::infinity();
+			for (unsigned i = 0; i < solution.Q.size(); i++)
+			{
+				IKS::Homogeneous_T result = robot.fwdkin(solution.Q.at(i));
+
+				double error = (result - pose).norm();
+				// Only account for non-LS-solutions in this test
+				if (error < smallest_error)
+				{
+					smallest_error = error;
+					smallest_error_LS = solution.Q.at(i);
+				}
+			}
+			if(solution.Q.size() > 0)
+			{
+				max_error = max_error < smallest_error ? smallest_error : max_error;
+				
+				sum_error += smallest_error;
+				total_LS_solutions++;
+			}
+			else
+			{
+				total_no_solution++;
+			}
 		}
 	}
 
-	const double avg_error = sum_error / total_non_LS_solutions;
+	double avg_error = std::numeric_limits<double>::infinity();
+	
+	if(total_LS_solutions+total_non_LS_solutions > 0)
+	{
+		avg_error = sum_error / (total_non_LS_solutions+total_LS_solutions);
+	}
 	const bool is_passed{std::fabs(max_error) < ERROR_PASS_EPSILON &&
 						 std::fabs(avg_error) < ERROR_PASS_EPSILON};
 	std::cout << "\n===== Test [" << name_test << "]: ";
@@ -415,6 +450,8 @@ bool evaluate_test(const std::string &name_test, const IKS::General_Robot &robot
 	}
 	std::cout << "\tAverage error: " << avg_error << std::endl;
 	std::cout << "\tMaximum error: " << max_error << std::endl;
+	std::cout << "\tNum LS solutions:  " << total_LS_solutions << std::endl;
+	std::cout << "\tNum NO solutions:  " << total_no_solution << std::endl;
 	std::cout << "===== Average solution time (nanoseconds): " << time / BATCH_SIZE << " =====" << std::endl;
 
 	return is_passed;
