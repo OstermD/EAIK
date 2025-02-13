@@ -3,7 +3,7 @@
 #include <iostream>
 #include <math.h>
 
-#include "kinematic_remodelling.h"
+#include "kinematic_remodeling.h"
 
 
 namespace EAIK

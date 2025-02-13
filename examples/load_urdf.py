@@ -1,13 +1,18 @@
 import numpy as np
 import random
-from eaik.IK_URDF import Robot
+from eaik.IK_URDF import UrdfRobot
 import evaluate_ik as eval
 
 def urdf_example(path, batch_size):
     """
     Loads spherical-wrist robot from urdf, calculates IK using subproblems and checks the solution for a certian batch size
     """
-    bot = Robot(path, [], False)
+    bot = UrdfRobot(path, [])
+    print("Kinematic Family of the Robot: ", bot.kinematicFamily())
+    print("Joint axes orientations before remodeling: \n",bot.H_original())
+    print("Joint axes' reference points before remodeling: \n", bot.P_original())
+    print("Joint axes orientations after remodeling: \n", bot.H_remodeled())
+    print("Joint axes' reference points after remodeling: \n", bot.P_remodeled())
 
     # Example desired pose
     test_angles = []
@@ -20,6 +25,7 @@ def urdf_example(path, batch_size):
        poses.append(bot.fwdKin(angles))
         
     sum_pos_error = np.array([0.,0.,0.])
+    sum_rot_error = np.array([0.,0.,0.])
     total_num_ls = 0
     for pose in poses:
         ik_solution = bot.IK(pose)
@@ -28,6 +34,8 @@ def urdf_example(path, batch_size):
             # LS solution
             total_num_ls += 1
         sum_pos_error+=error_sum_pos
+        sum_rot_error+=error_sum_rot
+    print("Avg. Orientation Error: ", sum_rot_error/len(poses))
     print("Avg. Position Error: ", sum_pos_error/len(poses))
     print("Number analytical: ", len(poses)-total_num_ls)
     print("Number LS: ", total_num_ls)

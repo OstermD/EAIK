@@ -1,13 +1,13 @@
 import numpy as np
 import random
-from eaik.IK_URDF import Robot
+from eaik.IK_URDF import UrdfRobot
 import evaluate_ik as eval
 
 def batched_ik_example(path, batch_size):
     """
     Loads spherical-wrist robot from urdf, calculates IK using subproblems and checks the solution for a certian batch size
     """
-    bot = Robot(path)
+    bot = UrdfRobot(path)
 
     # Example desired pose
     test_angles = []

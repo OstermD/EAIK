@@ -3,7 +3,7 @@
 #include <thread>
 #include <mutex>
 
-#include "kinematic_remodelling.h"
+#include "kinematic_remodeling.h"
 #include "kinematic_utils.h"
 #include "EAIK.h"
 
@@ -34,8 +34,8 @@ namespace EAIK
             throw std::runtime_error("Wrong input dimensions for H and P. Note that #P = #H+1.");
         }
 
-        Eigen::MatrixXd P_remodelled;
-        Eigen::MatrixXd H_remodelled;
+        Eigen::MatrixXd P_remodeled;
+        Eigen::MatrixXd H_remodeled;
 
         // Insert fixed axes (e.g., to cope with >6DOF manipulators) into the kinematic chain
         if(fixed_axes.size()>0)
@@ -44,43 +44,25 @@ namespace EAIK
             std::sort(this->fixed_axes.begin(), this->fixed_axes.end(), [](const std::pair<int, double>& a, const std::pair<int, double>& b) {return a.first < b.first;});
 
             const auto&[H_part, P_part, R6T_part] = partial_joint_parametrization(H, P, fixed_axes, R6T);
-            P_remodelled = remodel_kinematics(H_part, P_part, ZERO_THRESHOLD, AXIS_INTERSECT_THRESHOLD);
-            H_remodelled = H_part;
+            P_remodeled = remodel_kinematics(H_part, P_part, ZERO_THRESHOLD, AXIS_INTERSECT_THRESHOLD);
+            H_remodeled = H_part;
             this->R6T_partial = R6T_part;
         }
         else
         {
-            P_remodelled = remodel_kinematics(H, P, ZERO_THRESHOLD, AXIS_INTERSECT_THRESHOLD);
-            H_remodelled = H;
+            P_remodeled = remodel_kinematics(H, P, ZERO_THRESHOLD, AXIS_INTERSECT_THRESHOLD);
+            H_remodeled = H;
             this->R6T_partial = R6T;
         }
-        switch (H_remodelled.cols())
+        switch (H_remodeled.cols())
         {
         case 6:
-            // Check if last three axes intersect
-            if (P_remodelled.col(P_remodelled.cols()-3).norm() < ZERO_THRESHOLD && P_remodelled.col(P_remodelled.cols()-2).norm() < ZERO_THRESHOLD)
-            {   
-                spherical_wrist = true;
-                bot_kinematics = std::make_unique<IKS::Spherical_Wrist_Robot>(H_remodelled, P_remodelled);
-                original_kinematics = std::make_unique<IKS::General_Robot>(H, P);
-            }
-            else if(P_remodelled.col(1).norm() < ZERO_THRESHOLD && P_remodelled.col(2).norm() < ZERO_THRESHOLD)
-            {
-                // Spherical wrist is located at the base of the robot
-                spherical_wrist = true;
-                const auto&[H_reversed, P_reversed] = IKS::reverse_kinematic_chain(H_remodelled, P_remodelled);
-                bot_kinematics = std::make_unique<IKS::Spherical_Wrist_Robot>(H_reversed, P_reversed, true);
-                original_kinematics = std::make_unique<IKS::General_Robot>(H, P);
-            }
-            else 
-            {
-                bot_kinematics = std::make_unique<IKS::General_6R>(H_remodelled, P_remodelled);
-                original_kinematics = std::make_unique<IKS::General_Robot>(H, P);
-            }
+            bot_kinematics = std::make_unique<IKS::General_6R>(H_remodeled, P_remodeled);
+            original_kinematics = std::make_unique<IKS::General_Robot>(H, P);
             break;
         
         case 3:
-                bot_kinematics = std::make_unique<IKS::General_3R>(H_remodelled, P_remodelled);
+                bot_kinematics = std::make_unique<IKS::General_3R>(H_remodeled, P_remodeled);
                 original_kinematics = std::make_unique<IKS::General_Robot>(H, P);  
             break;
         default:
@@ -90,8 +72,38 @@ namespace EAIK
     }
 
 
+    Eigen::MatrixXd Robot::get_remodeled_H() const
+    {
+        return bot_kinematics->get_H();
+    }
+
+    Eigen::MatrixXd Robot::get_remodeled_P() const
+    {
+        return bot_kinematics->get_P();
+    }
+
+    Eigen::MatrixXd Robot::get_original_H() const
+    {
+        return original_kinematics->get_H();
+    }
+
+    Eigen::MatrixXd Robot::get_original_P() const
+    {
+        return original_kinematics->get_P();
+    }
+
+    std::string Robot::get_kinematic_family() const
+    {
+        return bot_kinematics->get_kinematic_family();
+    }
+
     IKS::IK_Solution Robot::calculate_IK(const IKS::Homogeneous_T &ee_position_orientation) const
     {
+        if (!bot_kinematics->has_known_decomposition())
+        {
+            throw std::runtime_error(decomposition_unknown_exception_info);
+        }
+
         IKS::Homogeneous_T ee_06_rot = ee_position_orientation;
         ee_06_rot.block<3,3>(0,0) *= R6T_partial.transpose();
         IKS::IK_Solution solution = bot_kinematics->calculate_IK(ee_06_rot);
@@ -110,6 +122,11 @@ namespace EAIK
     
     std::vector<IKS::IK_Solution> Robot::calculate_IK_batched(std::vector<IKS::Homogeneous_T> EE_pose_batch, const unsigned worker_threads) const
     {
+        if (!bot_kinematics->has_known_decomposition())
+        {
+            throw std::runtime_error(decomposition_unknown_exception_info);
+        }
+
         std::vector<IKS::IK_Solution> solutions(EE_pose_batch.size());
         std::vector<std::thread> thread_pool;
         thread_pool.reserve(worker_threads);
@@ -231,7 +248,7 @@ namespace EAIK
     
     bool Robot::is_spherical() const
     {
-        return spherical_wrist;
+        return this->bot_kinematics->is_spherical();
     }
 
     bool Robot::has_known_decomposition() const

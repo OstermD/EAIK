@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <eigen3/Eigen/Dense>
+#include <memory>
 
 namespace IKS
 {
@@ -31,6 +32,13 @@ namespace IKS
         virtual Homogeneous_T fwdkin(const std::vector<double> &Q) const final;
 
         virtual bool has_known_decomposition() const;
+        virtual bool is_spherical() const;
+
+        virtual Eigen::MatrixXd get_H() const final { return H; }
+        virtual Eigen::MatrixXd get_P() const final { return P; }
+
+        virtual std::string get_kinematic_family() const { return std::string("Unknown"); }
+
     private:
         Eigen::MatrixXd H;
         Eigen::MatrixXd P;
@@ -43,7 +51,9 @@ namespace IKS
         General_3R(const Eigen::Matrix<double, 3, 3> &H, const Eigen::Matrix<double, 3, 4> &P);
         IK_Solution calculate_IK(const Homogeneous_T &ee_position_orientation) const override;
 
-        bool has_known_decomposition() const override {return true;}
+        bool has_known_decomposition() const override { return true; }
+
+        std::string get_kinematic_family() const override { return std::string("3R"); }
 
     private:
         Eigen::Matrix<double, 3, 3> H;
@@ -52,32 +62,39 @@ namespace IKS
 
     class General_6R : public General_Robot
     {
-        // 6DOF Robot kinematics with spherical wrist (3 consecutive intersecting axes at the endeffector)
+        // General 6R Manipulator
     public:
         General_6R(const Eigen::Matrix<double, 3, 6> &H, const Eigen::Matrix<double, 3, 7> &P);
         IK_Solution calculate_IK(const Homogeneous_T &ee_position_orientation) const override;
 
         bool has_known_decomposition() const override;
+        bool is_spherical() const override;
+
+        std::string get_kinematic_family() const override;
 
     private:
+        enum KinematicClass
+        {
+            THREE_INNER_PARALLEL = 0,
+            THREE_PARALLEL_TWO_INTERSECTING = 1,
+            SPHERICAL_FIRST_TWO_PARALLEL = 2,
+            SPHERICAL_SECOND_TWO_PARALLEL = 3,
+            SPHERICAL_FIRST_TWO_INTERSECTING = 4,
+            SPHERICAL_SECOND_TWO_INTERSECTING = 5,
+            SPHERICAL_NO_PARALLEL_NO_INTERSECTING = 6,
+            REVERSED = 7,
+            UNKNOWN
+        };
+
+        KinematicClass determine_Kinematic_Class();
+        IK_Solution calculate_Spherical_Wrist_Orientation_Kinematics(const std::vector<std::vector<double>>& position_solutions, const std::vector<bool>& position_solution_is_LS, const Eigen::Matrix3d& r_06) const;
+
         Eigen::Matrix<double, 3, 6> H;
         Eigen::Matrix<double, 3, 7> P;
-    };
 
-    class Spherical_Wrist_Robot : public General_Robot
-    {
-        // 6DOF Robot kinematics with spherical wrist (3 consecutive intersecting axes at the endeffector)
-    public:
-        Spherical_Wrist_Robot(const Eigen::Matrix<double, 3, 6> &H, const Eigen::Matrix<double, 3, 7> &P, const bool use_inverted_chain=false);
-        IK_Solution calculate_IK(const Homogeneous_T &ee_position_orientation) const override;
+        KinematicClass kinematicClass{KinematicClass::UNKNOWN};
 
-        bool has_known_decomposition() const override {return true;}
-
-    private:
-        Eigen::Matrix<double, 3, 6> H;
-        Eigen::Matrix<double, 3, 7> P;
-
-        bool use_inverted_chain;
+        std::unique_ptr<General_6R> reversed_Robot_ptr;   // If kinematic class demands kinematic inversion, this robot will be used
     };
 }
 

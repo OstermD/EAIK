@@ -31,7 +31,7 @@ The current implementation supports automatic derivation of solutions for the fo
 
 In addition, we allow the user to solve arbitrary nR manipulators that, by locking individual joints, corrspond to one of the above kinematic families.
 
-We implement an user friendly interface for parametrizing a robot by a URDF file, DH parameters, or simply the homogeneous transformations that correspond to the joint axes placements (see src/eaik/examples).
+We implement an user friendly interface for parametrizing a robot by a URDF file, DH parameters, or simply the homogeneous transformations that correspond to the joint axes placements (see examples).
 
 If you require a vast amount of IK problems to be computed at once, we also implement a multithreaded batched version that allows you to make full use of processor.
 
@@ -53,16 +53,16 @@ You can find more elaborate examples on how to use our toolbox within the "src/e
 ### Simple DH Parametrization
 ```python
 import numpy as np
-from eaik.IK_DH import Robot
+from eaik.IK_DH import DhRobot
 
 """
-Example DH parametrization + forward kinematics for a random robot kinematic
+Example DH parametrization + forward kinematics for some robot kinematic
 """
 
-d = np.array([0, 0, 0, 0.56426215, 0.31625527, 0])
-alpha = np.array([np.pi/2, -np.pi/2, 0, np.pi/2, np.pi/2, 0])
-a = np.array([0, 0.6766692, 0.93924826, 0.99652755, 0, 0.9355382])
-bot = Robot(alpha, a, d)
+d = np.array([0.67183, 0.13970, 0, 0.43180, 0, 0.0565])
+alpha = np.array([-np.pi/2, 0, np.pi/2, -np.pi/2, np.pi/2, 0])
+a = np.array([0,0.43180, -0.02032, 0,0,0])
+bot = DhRobot(alpha, a, d)
 
 print(bot.hasKnownDecomposition())
 print(bot.fwdKin(np.array([1,1,1,1,1,1])))
@@ -74,15 +74,19 @@ print(bot.fwdKin(np.array([1,1,1,1,1,1])))
 ```python
 import numpy as np
 import random
-from eaik.IK_URDF import Robot
+from eaik.IK_URDF import UrdfRobot
 import evaluate_ik as eval
 
 def urdf_example(path, batch_size):
     """
     Loads spherical-wrist robot from urdf, calculates IK using subproblems and checks the solution for a certian batch size
     """
-
-    bot = Robot(path)
+    bot = UrdfRobot(path, [])
+    print("Kinematic Family of the Robot: ", bot.kinematicFamily())
+    print("Joint axes orientations before remodeling: \n",bot.H_original())
+    print("Joint axes' reference points before remodeling: \n", bot.P_original())
+    print("Joint axes orientations after remodeling: \n", bot.H_remodeled())
+    print("Joint axes' reference points after remodeling: \n", bot.P_remodeled())
 
     # Example desired pose
     test_angles = []
@@ -91,16 +95,22 @@ def urdf_example(path, batch_size):
         rand_angles *= 2*np.pi
         test_angles.append(rand_angles)
     poses = []
-
     for angles in test_angles:
        poses.append(bot.fwdKin(angles))
         
+    sum_pos_error = np.array([0.,0.,0.])
+    sum_rot_error = np.array([0.,0.,0.])
+    total_num_ls = 0
     for pose in poses:
-        ik_solutions = bot.IK(pose)
-
-        # Print forward kinematics for all solutions
-        for Q in ik_solutions.Q:
-            pose_fwd = bot.fwdKin(Q)
-            print(pose_fwd)
+        ik_solution = bot.IK(pose)
+        error_sum_pos, error_sum_rot, is_ls  = eval.evaluate_ik(bot, ik_solution, pose, np.eye(3))
+        if is_ls:
+            # LS solution
+            total_num_ls += 1
+        sum_pos_error+=error_sum_pos
+        sum_rot_error+=error_sum_rot
+    print("Avg. Orientation Error: ", sum_rot_error/len(poses))
+    print("Avg. Position Error: ", sum_pos_error/len(poses))
+    print("Number analytical: ", len(poses)-total_num_ls)
+    print("Number LS: ", total_num_ls)
 ```
-s
