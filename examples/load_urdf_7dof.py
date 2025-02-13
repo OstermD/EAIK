@@ -37,4 +37,4 @@ def ndof_example(path, batch_size):
     print("Number analytical: ", len(poses)-total_num_ls)
     print("Number LS: ", total_num_ls)
 
-ndof_example("/home/daniel/Documents/robots/panda/auto.urdf", 100)
+ndof_example("panda.urdf", 100)
