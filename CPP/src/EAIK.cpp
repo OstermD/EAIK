@@ -60,10 +60,25 @@ namespace EAIK
             bot_kinematics = std::make_unique<IKS::General_6R>(H_remodeled, P_remodeled);
             original_kinematics = std::make_unique<IKS::General_Robot>(H, P);
             break;
-        
+        case 5:
+            bot_kinematics = std::make_unique<IKS::General_3R>(H_remodeled, P_remodeled);
+            original_kinematics = std::make_unique<IKS::General_Robot>(H, P);
+            break;
+        case 4:
+            bot_kinematics = std::make_unique<IKS::General_3R>(H_remodeled, P_remodeled);
+            original_kinematics = std::make_unique<IKS::General_Robot>(H, P);  
+            break;  
         case 3:
-                bot_kinematics = std::make_unique<IKS::General_3R>(H_remodeled, P_remodeled);
-                original_kinematics = std::make_unique<IKS::General_Robot>(H, P);  
+            bot_kinematics = std::make_unique<IKS::General_3R>(H_remodeled, P_remodeled);
+            original_kinematics = std::make_unique<IKS::General_Robot>(H, P);  
+            break;
+        case 2:
+            bot_kinematics = std::make_unique<IKS::General_3R>(H_remodeled, P_remodeled);
+            original_kinematics = std::make_unique<IKS::General_Robot>(H, P);  
+            break;
+        case 1:
+            bot_kinematics = std::make_unique<IKS::General_3R>(H_remodeled, P_remodeled);
+            original_kinematics = std::make_unique<IKS::General_Robot>(H, P);  
             break;
         default:
             throw std::runtime_error("Currently, only 6R and 3R Robots are solvable with EAIK.");

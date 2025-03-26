@@ -29,6 +29,9 @@ namespace IKS
     public:
         General_Robot(const Eigen::MatrixXd &H, const Eigen::MatrixXd &P);
         virtual IK_Solution calculate_IK(const Homogeneous_T &ee_position_orientation) const;
+        virtual IK_Solution calculate_position_IK(const Eigen::Vector3d &ee_position) const;
+        virtual IK_Solution calculate_orientation_IK(const Eigen::Matrix3d &ee_orientation) const;
+
         virtual Homogeneous_T fwdkin(const std::vector<double> &Q) const final;
 
         virtual bool has_known_decomposition() const;
@@ -44,12 +47,50 @@ namespace IKS
         Eigen::MatrixXd P;
     };
 
+    class General_1R : public General_Robot
+    {
+        // General 1R Manipulator
+    public:
+        General_1R(const Eigen::Matrix<double, 3, 1> &H, const Eigen::Matrix<double, 3, 2> &P);
+        IK_Solution calculate_IK(const Homogeneous_T &ee_position_orientation) const override;
+        IK_Solution calculate_position_IK(const Eigen::Vector3d &ee_position) const;
+        IK_Solution calculate_orientation_IK(const Eigen::Matrix3d &ee_orientation) const;
+
+        bool has_known_decomposition() const override { return true; }
+
+        std::string get_kinematic_family() const override { return std::string("1R"); }
+
+    private:
+        Eigen::Matrix<double, 3, 1> H;
+        Eigen::Matrix<double, 3, 2> P;
+    };
+
+    class General_2R : public General_Robot
+    {
+        // General 2R Manipulator
+    public:
+        General_2R(const Eigen::Matrix<double, 3, 2> &H, const Eigen::Matrix<double, 3, 3> &P);
+        IK_Solution calculate_IK(const Homogeneous_T &ee_position_orientation) const override;
+        IK_Solution calculate_position_IK(const Eigen::Vector3d &ee_position) const;
+        IK_Solution calculate_orientation_IK(const Eigen::Matrix3d &ee_orientation) const;
+
+        bool has_known_decomposition() const override { return true; }
+
+        std::string get_kinematic_family() const override { return std::string("2R"); }
+
+    private:
+        Eigen::Matrix<double, 3, 2> H;
+        Eigen::Matrix<double, 3, 3> P;
+    };
+
     class General_3R : public General_Robot
     {
         // General 3R Manipulator
     public:
         General_3R(const Eigen::Matrix<double, 3, 3> &H, const Eigen::Matrix<double, 3, 4> &P);
         IK_Solution calculate_IK(const Homogeneous_T &ee_position_orientation) const override;
+        IK_Solution calculate_position_IK(const Eigen::Vector3d &ee_position) const;
+        IK_Solution calculate_orientation_IK(const Eigen::Matrix3d &ee_orientation) const;
 
         bool has_known_decomposition() const override { return true; }
 
@@ -58,6 +99,38 @@ namespace IKS
     private:
         Eigen::Matrix<double, 3, 3> H;
         Eigen::Matrix<double, 3, 4> P;
+    };
+
+    class General_4R : public General_Robot
+    {
+        // General 4R Manipulator
+    public:
+        General_4R(const Eigen::Matrix<double, 3, 4> &H, const Eigen::Matrix<double, 3, 5> &P);
+        IK_Solution calculate_IK(const Homogeneous_T &ee_position_orientation) const override;
+
+        bool has_known_decomposition() const override { return true; }
+
+        std::string get_kinematic_family() const override { return std::string("4R"); }
+
+    private:
+        Eigen::Matrix<double, 3, 4> H;
+        Eigen::Matrix<double, 3, 5> P;
+    };
+
+    class General_5R : public General_Robot
+    {
+        // General 5R Manipulator
+    public:
+        General_5R(const Eigen::Matrix<double, 3, 5> &H, const Eigen::Matrix<double, 3, 6> &P);
+        IK_Solution calculate_IK(const Homogeneous_T &ee_position_orientation) const override;
+        
+        bool has_known_decomposition() const override { return true; }
+
+        std::string get_kinematic_family() const override { return std::string("5R"); }
+
+    private:
+        Eigen::Matrix<double, 3, 5> H;
+        Eigen::Matrix<double, 3, 6> P;
     };
 
     class General_6R : public General_Robot
