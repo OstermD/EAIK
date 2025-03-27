@@ -26,6 +26,33 @@ namespace IKS
         {
             // (h3 x h4)(p34)==0) -> h3 intersects h4
             // And 3 not parallel to 4 (h3 x h4 =/= 0)
+            SP3 sp3_q1(p_14, this->P.col(1), -this->H.col(0), this->P.col(2).norm());
+            sp3_q1.solve();
+
+            for(const auto& q1 : sp3_q1.get_theta())
+            {
+                const Eigen::Matrix3d r_10 = Eigen::AngleAxisd(q1, -this->H.col(0).normalized()).toRotationMatrix();
+                SP3 sp3_q2(this->P.col(2), -this->P.col(1), this->H.col(1), p_14.norm());
+                sp3_q2.solve();
+
+                for(const auto& q2 : sp3_q2.get_theta())
+                {
+                    const Eigen::Matrix3d r_21 = Eigen::AngleAxisd(q2, -this->H.col(1).normalized()).toRotationMatrix();
+
+                    const Eigen::Vector3d hn = create_normal_vector(this->H.col(2));
+                    SP2 sp2(r_21*r_10*r_04*hn, hn, -this->H.col(2), this->H.col(3));
+                    sp2.solve();
+
+                    const std::vector<double>& theta_3 = sp2.get_theta_1();
+                    const std::vector<double>& theta_4 = sp2.get_theta_2();
+
+                    for(unsigned i = 0; i < theta_3.size(); ++i)
+                    {
+                        solution.Q.push_back({q1, q2, theta_3.at(i), theta_4.at(i)});
+                        solution.is_LS_vec.push_back(sp3_q1.solution_is_ls() || sp3_q2.solution_is_ls() || sp2.solution_is_ls());
+                    }
+                }
+            }
         }
         else if (this->H.col(1).cross(this->H.col(2)).norm() >= ZERO_THRESH && 
         std::fabs(this->H.col(1).cross(this->H.col(2)).transpose() * this->P.col(2)) < ZERO_THRESH)// h2xh3(p23) == 0
@@ -66,7 +93,32 @@ namespace IKS
             else
             {
                 // h1 =/= h2; h2=h3
+                SP4 sp4(this->H.col(1), p_14, -this->H.col(0), this->H.col(1).transpose()*(this->P.col(1) + this->P.col(2) + this->P.col(3)));
+                sp4.solve();
 
+                for(const auto& q1 : sp4.get_theta())
+                {
+                    const Eigen::Matrix3d r_10 = Eigen::AngleAxisd(q1, -this->H.col(0).normalized()).toRotationMatrix();
+                    SP3 sp3(this->P.col(3), -this->P.col(2), this->H.col(2), (r_10*p_14-this->P.col(1)).norm());
+                    sp3.solve();
+
+                    for(const auto& q3 : sp3.get_theta())
+                    {
+                        const Eigen::Matrix3d r_23 = Eigen::AngleAxisd(q3, this->H.col(2).normalized()).toRotationMatrix();
+                        SP1 sp1_q2(this->P.col(2) + r_23*this->P.col(3), r_10*p_14-this->P.col(1), this->H.col(1));
+                        sp1_q2.solve();
+
+                        const double q2 = sp1_q2.get_theta();
+                        const Eigen::Matrix3d r_12 = Eigen::AngleAxisd(q2, this->H.col(1).normalized()).toRotationMatrix();
+
+                        const Eigen::Vector3d hn = create_normal_vector(this->H.col(3));
+                        SP1 sp1_q4(hn, r_04.transpose()*r_10.transpose()*r_12*r_23*hn, -this->H.col(3));
+                        sp1_q4.solve();
+
+                        solution.Q.push_back({q1, q2, q3, sp1_q4.get_theta()});
+                        solution.is_LS_vec.push_back(sp4.solution_is_ls() || sp3.solution_is_ls() || sp1_q2.solution_is_ls() || sp1_q4.solution_is_ls());
+                    }
+                }
             }
         }
         else
@@ -74,6 +126,27 @@ namespace IKS
             if (this->H.col(1).cross(this->H.col(2)).norm() > ZERO_THRESH)
             {
                 // h1 = h2; h2=/=h3
+                SP4 sp4_q3(this->H.col(0), this->P.col(3), this->H.col(2), this->H.col(0).transpose()*(p_14 - this->P.col(1) - this->P.col(2)));
+                sp4_q3.solve();
+
+                for(const auto& q3 : sp4_q3.get_theta())
+                {
+                    const Eigen::Matrix3d r_23 = Eigen::AngleAxisd(q3, this->H.col(2).normalized()).toRotationMatrix();
+                    SP3 sp3_q1(p_14, this->P.col(1), -this->H.col(0), (this->P.col(2)+r_23*this->P.col(3)).norm());
+                    sp3_q1.solve();
+
+                    for(const auto& q1 : sp3_q1.get_theta())
+                    {
+                        const Eigen::Matrix3d r_01 = Eigen::AngleAxisd(q1, this->H.col(0).normalized()).toRotationMatrix();
+                        SP1 sp1_q2(this->P.col(2)+r_23*this->P.col(3), r_01.transpose()*p_14-this->P.col(1), this->H.col(1));
+                        sp1_q2.solve();
+
+                        const Eigen::Matrix3d r_12 = Eigen::AngleAxisd(sp1_q2.get_theta(), this->H.col(1).normalized()).toRotationMatrix();
+                        const Eigen::Vector3d hn = create_normal_vector(this->H.col(3));
+                        SP1 sp1_q4(hn, r_04.transpose()*r_01*r_12*r_23*hn, -this->H.col(3));
+                        sp1_q4.solve();
+                    }
+                }
             }
             else
             {
