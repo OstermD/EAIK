@@ -6,12 +6,95 @@
 #include "sp.h"
 #include "IKS.h"
 #include "utils/kinematic_utils.h"
+#include "kinematic_remodeling.h"
 
 namespace IKS
 {
     General_4R::General_4R(const Eigen::Matrix<double, 3, 4> &H, const Eigen::Matrix<double, 3, 5> &P)
         : General_Robot(H,P), H(H), P(P)
     {
+    }
+
+    General_4R::KinematicClass General_4R::determine_Kinematic_Class()
+    {
+        if (this->H.col(0).cross(this->H.col(1)).norm() >= ZERO_THRESH && 
+        std::fabs(this->H.col(0).cross(this->H.col(1)).transpose() * this->P.col(1)) < ZERO_THRESH)
+        {
+            // (h1 x h2)(p12)==0) -> h1 intersects h2
+            // And 1 not parallel to 2 (h1 x h2 =/= 0)
+            const Eigen::Vector3d intersection = EAIK::calc_intersection(H.col(0), H.col(1), P.col(0), P.col(1), ZERO_THRESH);
+
+            if(EAIK::is_point_on_Axis(H.col(2), P.col(0)+P.col(1)+P.col(2), intersection, ZERO_THRESH))
+            {
+                const auto&[H_reversed, P_reversed] = reverse_kinematic_chain(this->H, this->P);
+                const Eigen::MatrixXd P_reversed_remodeled = EAIK::remodel_kinematics(H_reversed, P_reversed, ZERO_THRESH, ZERO_THRESH);
+
+                this->reversed_Robot_ptr = std::make_unique<General_4R>(H_reversed, P_reversed_remodeled);
+                // Spherical Wrist at the base of the robot
+                return KinematicClass::REVERSED;
+            }
+            else if(this->H.col(2).cross(this->H.col(3)).norm() >= ZERO_THRESH && 
+            std::fabs(this->H.col(2).cross(this->H.col(3)).transpose() * this->P.col(3)) < ZERO_THRESH)
+            {
+                // (h3 x h4)(p34)==0) -> h3 intersects h4
+                // And 3 not parallel to 4 (h3 x h4 =/= 0)
+                return KinematicClass::FIRST_TWO_LAST_TWO_INTERSECTING;
+            }
+
+            // Same as if h3 intersects with h4 -> Use reversed kinematics
+            const auto&[H_reversed, P_reversed] = reverse_kinematic_chain(this->H, this->P);
+            const Eigen::MatrixXd P_reversed_remodeled = EAIK::remodel_kinematics(H_reversed, P_reversed, ZERO_THRESH, ZERO_THRESH);
+
+            this->reversed_Robot_ptr = std::make_unique<General_4R>(H_reversed, P_reversed_remodeled);
+            return KinematicClass::REVERSED;
+        }
+
+        // Spherical wrist at end of manipulator
+        if (this->H.col(1).cross(this->H.col(2)).norm() >= ZERO_THRESH && 
+            std::fabs(this->H.col(1).cross(this->H.col(2)).transpose() * this->P.col(2)) < ZERO_THRESH)
+        {
+            const Eigen::Vector3d p02 = P.block<3,2>(0,0).rowwise().sum();
+            const Eigen::Vector3d intersection = EAIK::calc_intersection(H.col(1), H.col(2), p02,P.col(2), ZERO_THRESH);
+
+            if(EAIK::is_point_on_Axis(H.col(3), p02+P.col(2)+P.col(3), intersection, ZERO_THRESH))
+            {
+                return KinematicClass::SPHERICAL_WRIST;
+            }
+
+            return KinematicClass::SECOND_THIRD_INTERSECTING;
+        }
+
+        if(this->H.col(2).cross(this->H.col(3)).norm() >= ZERO_THRESH && 
+        std::fabs(this->H.col(2).cross(this->H.col(3)).transpose() * this->P.col(3)) < ZERO_THRESH)
+        {
+            // (h3 x h4)(p34)==0) -> h3 intersects h4
+            // And 3 not parallel to 4 (h3 x h4 =/= 0)
+            return KinematicClass::THIRD_FOURTH_INTERSECTING;
+        }
+    
+        if (this->H.col(0).cross(this->H.col(1)).norm() > ZERO_THRESH)
+        {
+            // h1 =/= h2 
+            if (this->H.col(1).cross(this->H.col(2)).norm() > ZERO_THRESH)
+            {
+                // h2 =/= h3 
+                return KinematicClass::NONE_PARALLEL_NONE_INTERSECTING;
+            }
+            // h2 == h3 
+            return KinematicClass::SECOND_THIRD_PARALLEL;   
+        }
+        else if(this->H.col(1).cross(this->H.col(2)).norm() > ZERO_THRESH)
+        {
+            // h1 == h2 , h2 =/= h3
+            return KinematicClass::FIRST_SECOND_PARALLEL;
+        }
+        else
+        {
+            // h1 == h2 , h2 == h3 -> h3 =/= h4 for non-redundant manipulator -> reverse
+            return KinematicClass::REVERSED;
+        }
+
+        return KinematicClass::UNKNOWN;     
     }
 
     IK_Solution General_4R::calculate_IK(const Homogeneous_T &ee_position_orientation) const
@@ -21,76 +104,72 @@ namespace IKS
         const Eigen::Matrix3d r_04 = ee_position_orientation.block<3, 3>(0, 0);
         const Eigen::Vector3d p_14 = p_0t - this->P.col(0) - r_04*this->P.col(4);        
 
-        if(this->H.col(2).cross(this->H.col(3)).norm() >= ZERO_THRESH && 
-            std::fabs(this->H.col(2).cross(this->H.col(3)).transpose() * this->P.col(3)) < ZERO_THRESH)
+        switch(this->kinematicClass)
         {
-            // (h3 x h4)(p34)==0) -> h3 intersects h4
-            // And 3 not parallel to 4 (h3 x h4 =/= 0)
-            SP3 sp3_q1(p_14, this->P.col(1), -this->H.col(0), this->P.col(2).norm());
-            sp3_q1.solve();
-
-            for(const auto& q1 : sp3_q1.get_theta())
+            case KinematicClass::THIRD_FOURTH_INTERSECTING:
             {
-                const Eigen::Matrix3d r_10 = Eigen::AngleAxisd(q1, -this->H.col(0).normalized()).toRotationMatrix();
-                SP3 sp3_q2(this->P.col(2), -this->P.col(1), this->H.col(1), p_14.norm());
-                sp3_q2.solve();
+                // (h3 x h4)(p34)==0) -> h3 intersects h4
+                // And 3 not parallel to 4 (h3 x h4 =/= 0)
+                SP3 sp3_q1(p_14, this->P.col(1), -this->H.col(0), this->P.col(2).norm());
+                sp3_q1.solve();
 
-                for(const auto& q2 : sp3_q2.get_theta())
+                for(const auto& q1 : sp3_q1.get_theta())
                 {
-                    const Eigen::Matrix3d r_21 = Eigen::AngleAxisd(q2, -this->H.col(1).normalized()).toRotationMatrix();
+                    const Eigen::Matrix3d r_10 = Eigen::AngleAxisd(q1, -this->H.col(0).normalized()).toRotationMatrix();
+                    SP3 sp3_q2(this->P.col(2), -this->P.col(1), this->H.col(1), p_14.norm());
+                    sp3_q2.solve();
 
-                    const Eigen::Vector3d hn = create_normal_vector(this->H.col(2));
-                    SP2 sp2(r_21*r_10*r_04*hn, hn, -this->H.col(2), this->H.col(3));
-                    sp2.solve();
-
-                    const std::vector<double>& theta_3 = sp2.get_theta_1();
-                    const std::vector<double>& theta_4 = sp2.get_theta_2();
-
-                    for(unsigned i = 0; i < theta_3.size(); ++i)
+                    for(const auto& q2 : sp3_q2.get_theta())
                     {
-                        solution.Q.push_back({q1, q2, theta_3.at(i), theta_4.at(i)});
-                        solution.is_LS_vec.push_back(sp3_q1.solution_is_ls() || sp3_q2.solution_is_ls() || sp2.solution_is_ls());
+                        const Eigen::Matrix3d r_21 = Eigen::AngleAxisd(q2, -this->H.col(1).normalized()).toRotationMatrix();
+
+                        const Eigen::Vector3d hn = create_normal_vector(this->H.col(2));
+                        SP2 sp2(r_21*r_10*r_04*hn, hn, -this->H.col(2), this->H.col(3));
+                        sp2.solve();
+
+                        const std::vector<double>& theta_3 = sp2.get_theta_1();
+                        const std::vector<double>& theta_4 = sp2.get_theta_2();
+
+                        for(unsigned i = 0; i < theta_3.size(); ++i)
+                        {
+                            solution.Q.push_back({q1, q2, theta_3.at(i), theta_4.at(i)});
+                            solution.is_LS_vec.push_back(sp3_q1.solution_is_ls() || sp3_q2.solution_is_ls() || sp2.solution_is_ls());
+                        }
                     }
                 }
-            }
-        }
-        else if (this->H.col(1).cross(this->H.col(2)).norm() >= ZERO_THRESH && 
-        std::fabs(this->H.col(1).cross(this->H.col(2)).transpose() * this->P.col(2)) < ZERO_THRESH)// h2xh3(p23) == 0
-        {
-            // (h2 x h3)(p23)==0) -> h2 intersects h3
-            // And 2 not parallel to 3 (h2 x h3 =/= 0)
-        }
-        else if (this->H.col(0).cross(this->H.col(1)).norm() > ZERO_THRESH)
-        {
-            if (this->H.col(1).cross(this->H.col(2)).norm() > ZERO_THRESH)
+                break;
+            };
+            case KinematicClass::SECOND_THIRD_INTERSECTING:
             {
-                // h1 =/= h2; h2=/=h3
-                SP5 sp5(-this->P.col(1), p_14, this->P.col(2), this->P.col(3), -this->H.col(0), this->H.col(1), this->H.col(2));
-                sp5.solve();
+                break;
+            };
+            case KinematicClass::FIRST_SECOND_PARALLEL:
+            {
+                // h1 = h2; h2=/=h3
+                SP4 sp4_q3(this->H.col(0), this->P.col(3), this->H.col(2), this->H.col(0).transpose()*(p_14 - this->P.col(1) - this->P.col(2)));
+                sp4_q3.solve();
 
-                const std::vector<double> &theta_1 = sp5.get_theta_1();
-                const std::vector<double> &theta_2 = sp5.get_theta_2();
-                const std::vector<double> &theta_3 = sp5.get_theta_3();
-
-                const Eigen::Vector3d h_n = create_normal_vector(this->H.col(3));
-                for(unsigned i = 0; i < theta_1.size(); i++)
+                for(const auto& q3 : sp4_q3.get_theta())
                 {
-                    const double& q1 = theta_1.at(i);
-                    const double& q2 = theta_2.at(i);
-                    const double& q3 = theta_3.at(i);
-                    const Eigen::Matrix3d r_01 = Eigen::AngleAxisd(q1, this->H.col(0).normalized()).toRotationMatrix();
-                    const Eigen::Matrix3d r_12 = Eigen::AngleAxisd(q2, this->H.col(1).normalized()).toRotationMatrix();
                     const Eigen::Matrix3d r_23 = Eigen::AngleAxisd(q3, this->H.col(2).normalized()).toRotationMatrix();
-                    
-                    SP1 sp1(h_n, r_23.transpose()*r_12.transpose()*r_01.transpose()*r_04*h_n, this->H.col(3));
-                    sp1.solve();
+                    SP3 sp3_q1(p_14, this->P.col(1), -this->H.col(0), (this->P.col(2)+r_23*this->P.col(3)).norm());
+                    sp3_q1.solve();
 
-                    solution.Q.push_back({q1, q2, q3, sp1.get_theta()});
-                    solution.is_LS_vec.push_back(sp5.solution_is_ls() || sp1.solution_is_ls());
+                    for(const auto& q1 : sp3_q1.get_theta())
+                    {
+                        const Eigen::Matrix3d r_01 = Eigen::AngleAxisd(q1, this->H.col(0).normalized()).toRotationMatrix();
+                        SP1 sp1_q2(this->P.col(2)+r_23*this->P.col(3), r_01.transpose()*p_14-this->P.col(1), this->H.col(1));
+                        sp1_q2.solve();
+
+                        const Eigen::Matrix3d r_12 = Eigen::AngleAxisd(sp1_q2.get_theta(), this->H.col(1).normalized()).toRotationMatrix();
+                        const Eigen::Vector3d hn = create_normal_vector(this->H.col(3));
+                        SP1 sp1_q4(hn, r_04.transpose()*r_01*r_12*r_23*hn, -this->H.col(3));
+                        sp1_q4.solve();
+                    }
                 }
-
-            }
-            else
+                break;
+            };
+            case KinematicClass::SECOND_THIRD_PARALLEL:
             {
                 // h1 =/= h2; h2=h3
                 SP4 sp4(this->H.col(1), p_14, -this->H.col(0), this->H.col(1).transpose()*(this->P.col(1) + this->P.col(2) + this->P.col(3)));
@@ -119,41 +198,48 @@ namespace IKS
                         solution.is_LS_vec.push_back(sp4.solution_is_ls() || sp3.solution_is_ls() || sp1_q2.solution_is_ls() || sp1_q4.solution_is_ls());
                     }
                 }
-            }
-        }
-        else
-        {
-            if (this->H.col(1).cross(this->H.col(2)).norm() > ZERO_THRESH)
+                break;
+            };
+            case KinematicClass::NONE_PARALLEL_NONE_INTERSECTING:
             {
-                // h1 = h2; h2=/=h3
-                SP4 sp4_q3(this->H.col(0), this->P.col(3), this->H.col(2), this->H.col(0).transpose()*(p_14 - this->P.col(1) - this->P.col(2)));
-                sp4_q3.solve();
+                // h1 =/= h2; h2=/=h3
+                SP5 sp5(-this->P.col(1), p_14, this->P.col(2), this->P.col(3), -this->H.col(0), this->H.col(1), this->H.col(2));
+                sp5.solve();
 
-                for(const auto& q3 : sp4_q3.get_theta())
+                const std::vector<double> &theta_1 = sp5.get_theta_1();
+                const std::vector<double> &theta_2 = sp5.get_theta_2();
+                const std::vector<double> &theta_3 = sp5.get_theta_3();
+
+                const Eigen::Vector3d h_n = create_normal_vector(this->H.col(3));
+                for(unsigned i = 0; i < theta_1.size(); i++)
                 {
+                    const double& q1 = theta_1.at(i);
+                    const double& q2 = theta_2.at(i);
+                    const double& q3 = theta_3.at(i);
+                    const Eigen::Matrix3d r_01 = Eigen::AngleAxisd(q1, this->H.col(0).normalized()).toRotationMatrix();
+                    const Eigen::Matrix3d r_12 = Eigen::AngleAxisd(q2, this->H.col(1).normalized()).toRotationMatrix();
                     const Eigen::Matrix3d r_23 = Eigen::AngleAxisd(q3, this->H.col(2).normalized()).toRotationMatrix();
-                    SP3 sp3_q1(p_14, this->P.col(1), -this->H.col(0), (this->P.col(2)+r_23*this->P.col(3)).norm());
-                    sp3_q1.solve();
+                    
+                    SP1 sp1(h_n, r_23.transpose()*r_12.transpose()*r_01.transpose()*r_04*h_n, this->H.col(3));
+                    sp1.solve();
 
-                    for(const auto& q1 : sp3_q1.get_theta())
-                    {
-                        const Eigen::Matrix3d r_01 = Eigen::AngleAxisd(q1, this->H.col(0).normalized()).toRotationMatrix();
-                        SP1 sp1_q2(this->P.col(2)+r_23*this->P.col(3), r_01.transpose()*p_14-this->P.col(1), this->H.col(1));
-                        sp1_q2.solve();
-
-                        const Eigen::Matrix3d r_12 = Eigen::AngleAxisd(sp1_q2.get_theta(), this->H.col(1).normalized()).toRotationMatrix();
-                        const Eigen::Vector3d hn = create_normal_vector(this->H.col(3));
-                        SP1 sp1_q4(hn, r_04.transpose()*r_01*r_12*r_23*hn, -this->H.col(3));
-                        sp1_q4.solve();
-                    }
+                    solution.Q.push_back({q1, q2, q3, sp1.get_theta()});
+                    solution.is_LS_vec.push_back(sp5.solution_is_ls() || sp1.solution_is_ls());
                 }
-            }
-            else
+                break;
+            };
+            case KinematicClass::FIRST_TWO_LAST_TWO_INTERSECTING:
             {
-                // Implicit redundancy
-            }
+                break;
+            };            
+            case KinematicClass::SPHERICAL_WRIST:
+            {
+                break;
+            };
+            default:
+                std::cerr<< "The choosen manipulator has no known subproblem decomposition! The resulting solutions will be empty."<<std::endl;
         }
-
+        
         return solution;
     }
 };

@@ -29,8 +29,6 @@ namespace IKS
     public:
         General_Robot(const Eigen::MatrixXd &H, const Eigen::MatrixXd &P);
         virtual IK_Solution calculate_IK(const Homogeneous_T &ee_position_orientation) const;
-        virtual IK_Solution calculate_position_IK(const Eigen::Vector3d &ee_position) const;
-        virtual IK_Solution calculate_orientation_IK(const Eigen::Matrix3d &ee_orientation) const;
 
         virtual Homogeneous_T fwdkin(const std::vector<double> &Q) const final;
 
@@ -113,8 +111,26 @@ namespace IKS
         std::string get_kinematic_family() const override { return std::string("4R"); }
 
     private:
+        enum KinematicClass
+        {
+            THIRD_FOURTH_INTERSECTING = 0,
+            SECOND_THIRD_INTERSECTING = 1,
+            FIRST_SECOND_PARALLEL = 2,
+            SECOND_THIRD_PARALLEL = 3,
+            NONE_PARALLEL_NONE_INTERSECTING = 4,
+            FIRST_TWO_LAST_TWO_INTERSECTING = 5,
+            SPHERICAL_WRIST = 6,
+            REVERSED = 7,
+            UNKNOWN
+        };
+
         Eigen::Matrix<double, 3, 4> H;
         Eigen::Matrix<double, 3, 5> P;
+
+        KinematicClass determine_Kinematic_Class();
+
+        KinematicClass kinematicClass{KinematicClass::UNKNOWN};
+        std::unique_ptr<General_4R> reversed_Robot_ptr;   // If kinematic class demands kinematic inversion, this robot will be used
     };
 
     class General_5R : public General_Robot
@@ -129,8 +145,19 @@ namespace IKS
         std::string get_kinematic_family() const override { return std::string("5R"); }
 
     private:
+        enum KinematicClass
+        {
+            REVERSED = 7,
+            UNKNOWN
+        };
+
         Eigen::Matrix<double, 3, 5> H;
         Eigen::Matrix<double, 3, 6> P;
+
+        KinematicClass determine_Kinematic_Class();
+
+        KinematicClass kinematicClass{KinematicClass::UNKNOWN};
+        std::unique_ptr<General_5R> reversed_Robot_ptr;   // If kinematic class demands kinematic inversion, this robot will be used
     };
 
     class General_6R : public General_Robot
