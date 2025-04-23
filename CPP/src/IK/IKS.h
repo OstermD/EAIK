@@ -108,7 +108,7 @@ namespace IKS
 
         bool has_known_decomposition() const override { return true; }
 
-        std::string get_kinematic_family() const override { return std::string("4R"); }
+        std::string get_kinematic_family() const override;
 
     private:
         enum KinematicClass
