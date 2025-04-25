@@ -147,7 +147,7 @@ namespace IKS
         //
 
         // Check for spherical wrist
-        if (EAIK::do_axis_intersect(H.col(3), H.col(4), P.col(4), ZERO_THRESH, ZERO_THRESH))
+        if (EAIK::do_axes_intersect(H.col(3), H.col(4), P.col(4), ZERO_THRESH, ZERO_THRESH))
         {
             const Eigen::Vector3d p04 = P.block<3,4>(0,0).rowwise().sum();
             const Eigen::Vector3d intersection = EAIK::calc_intersection(H.col(3), H.col(4), p04,P.col(4), ZERO_THRESH);
@@ -185,7 +185,7 @@ namespace IKS
 
         }
         
-        if (EAIK::do_axis_intersect(H.col(0), H.col(1), P.col(1), ZERO_THRESH, ZERO_THRESH))
+        if (EAIK::do_axes_intersect(H.col(0), H.col(1), P.col(1), ZERO_THRESH, ZERO_THRESH))
         {
             const Eigen::Vector3d intersection = EAIK::calc_intersection(H.col(0), H.col(1), P.col(0), P.col(1), ZERO_THRESH);
 

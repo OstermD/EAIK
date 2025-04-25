@@ -8,7 +8,7 @@
 
 namespace EAIK
 {
-    bool do_axis_intersect(const Eigen::Vector3d& h1, const Eigen::Vector3d& h2, const Eigen::Vector3d& p12, const double ZERO_THRESHOLD, const double AXIS_INTERSECT_THRESHOLD)
+    bool do_axes_intersect(const Eigen::Vector3d& h1, const Eigen::Vector3d& h2, const Eigen::Vector3d& p12, const double ZERO_THRESHOLD, const double AXIS_INTERSECT_THRESHOLD)
     {
         return fabs((h1.cross(h2)).transpose()*p12) < AXIS_INTERSECT_THRESHOLD && (h1.cross(h2)).norm() > ZERO_THRESHOLD;
     }
@@ -53,7 +53,7 @@ namespace EAIK
             for(unsigned i = 0; i < H.cols()-4; i++)
             {
                 p0_i_plus1 += P_new.col(i);
-                if (do_axis_intersect(H.col(i), H.col(i+1), P.col(i+1), ZERO_THRESHOLD, AXIS_INTERSECT_THRESHOLD))
+                if (do_axes_intersect(H.col(i), H.col(i+1), P.col(i+1), ZERO_THRESHOLD, AXIS_INTERSECT_THRESHOLD))
                 {
                     Eigen::Vector3d intersection = calc_intersection(H.col(i), H.col(i+1), p0_i_plus1, P.col(i+1), ZERO_THRESHOLD);
                     P_new.col(i+1) = Eigen::Vector3d(0,0,0);
@@ -80,7 +80,7 @@ namespace EAIK
             for(unsigned i = H.cols()-3; i < H.cols()-1; i++)
             {
                 p0_i_plus1 += P_new.col(i);
-                if (do_axis_intersect(H.col(i), H.col(i+1), P.col(i+1), ZERO_THRESHOLD, AXIS_INTERSECT_THRESHOLD))
+                if (do_axes_intersect(H.col(i), H.col(i+1), P.col(i+1), ZERO_THRESHOLD, AXIS_INTERSECT_THRESHOLD))
                 {
                     Eigen::Vector3d intersection = calc_intersection(H.col(i), H.col(i+1), p0_i_plus1, P.col(i+1), AXIS_INTERSECT_THRESHOLD);
 
@@ -107,7 +107,7 @@ namespace EAIK
             for(unsigned i = 0; i < H.cols()-1; i++)
             {
                 p0_i_plus1 += P_new.col(i);
-                if (do_axis_intersect(H.col(i), H.col(i+1), P.col(i+1), ZERO_THRESHOLD, AXIS_INTERSECT_THRESHOLD))
+                if (do_axes_intersect(H.col(i), H.col(i+1), P.col(i+1), ZERO_THRESHOLD, AXIS_INTERSECT_THRESHOLD))
                 {
                     Eigen::Vector3d intersection = calc_intersection(H.col(i), H.col(i+1), p0_i_plus1, P.col(i+1), AXIS_INTERSECT_THRESHOLD);
 
