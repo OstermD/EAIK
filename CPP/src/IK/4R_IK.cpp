@@ -92,6 +92,10 @@ namespace IKS
         else
         {
             // h1 == h2 , h2 == h3 -> h3 =/= h4 for non-redundant manipulator -> reverse
+            const auto&[H_reversed, P_reversed] = reverse_kinematic_chain(this->H, this->P);
+            const Eigen::MatrixXd P_reversed_remodeled = EAIK::remodel_kinematics(H_reversed, P_reversed, ZERO_THRESH, ZERO_THRESH);
+
+            this->reversed_Robot_ptr = std::make_unique<General_4R>(H_reversed, P_reversed_remodeled);
             return KinematicClass::REVERSED;
         }
 
