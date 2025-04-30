@@ -274,7 +274,7 @@ namespace IKS
                 {
                     const Eigen::Matrix3d r_01 = Eigen::AngleAxisd(q1, this->H.col(0).normalized()).toRotationMatrix();
 
-                    SP1 sp1(r_01.transpose() * (p_15 - this->P.col(1)), this->P.col(2) + r_23 * this->P.col(3), -this->H.col(1));
+                    SP1 sp1(this->P.col(2) + r_23 * this->P.col(3), r_01.transpose() * p_15 - this->P.col(1), this->H.col(1));
                     sp1.solve();
 
                     const double &q2 = sp1.get_theta();
