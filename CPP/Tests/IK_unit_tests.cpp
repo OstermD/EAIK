@@ -8,14 +8,7 @@
 #include "IKS.h"
 #include "kinematic_utils.h"
 #include "kinematic_remodeling.h"
-
-#define ERROR_PASS_EPSILON 1e-6
-#define BATCH_SIZE 100
-
-const Eigen::Vector3d zv(0, 0, 0);
-const Eigen::Vector3d ex(1, 0, 0);
-const Eigen::Vector3d ey(0, 1, 0);
-const Eigen::Vector3d ez(0, 0, 1);
+#include "IK_test_utils.h"
 
 // Spherical wrist
 bool ik_test_SPHERICAL_1_2_P();
@@ -32,22 +25,6 @@ bool test_partial_joint_parametrization();
 
 // No spherical wrist
 bool ik_test_3P();
-
-bool evaluate_test(const std::string &name_test,
-				   const IKS::General_Robot &robot,
-				   const std::vector<IKS::Homogeneous_T> &ee_poses);
-
-// Create a random angle
-double rand_angle()
-{
-	std::random_device rd;
-	std::default_random_engine eng(rd());
-	std::uniform_real_distribution<double> distr(0, 1);
-
-	double theta = distr(eng) * 2 * M_PI - M_PI;
-
-	return theta;
-}
 
 int main(int argc, char *argv[])
 {
@@ -173,7 +150,7 @@ bool ik_test_3P()
 
 	}
 
-	return evaluate_test("IK three parallel - 2,3,4", three_parallel, ee_poses);
+	return evaluate_test<IKS::General_Robot>("IK three parallel - 2,3,4", three_parallel, ee_poses);
 }
 
 // spherical wrist, intersecting axes 1,2, parallel 2,3, intersecting 3,4
@@ -194,7 +171,7 @@ bool ik_test_PUMA()
 		ee_poses.push_back(puma.fwdkin({rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle()}));
 	}
 
-	return evaluate_test("IK spherical wrist - PUMA", puma, ee_poses);
+	return evaluate_test<IKS::General_Robot>("IK spherical wrist - PUMA", puma, ee_poses);
 }
 
 // spherical wrist, with the remaining second and third axis intersecting
@@ -214,7 +191,7 @@ bool ik_test_SPHERICAL_2_3_I()
 		ee_poses.push_back(spherical_intersecting.fwdkin({rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle()}));
 	}
 
-	return evaluate_test("IK spherical wrist - Axis 2 intersecting 3", spherical_intersecting, ee_poses);
+	return evaluate_test<IKS::General_Robot>("IK spherical wrist - Axis 2 intersecting 3", spherical_intersecting, ee_poses);
 }
 
 // spherical wrist, with the remaining first and second axis intersecting
@@ -240,7 +217,7 @@ bool ik_test_SPHERICAL_1_2_I()
 		ee_poses.push_back(spherical_intersecting.fwdkin({rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle()}));
 	}
 
-	return evaluate_test("IK spherical wrist - Axis 1 intersecting 2", spherical_intersecting, ee_poses);
+	return evaluate_test<IKS::General_Robot>("IK spherical wrist - Axis 1 intersecting 2", spherical_intersecting, ee_poses);
 }
 
 // spherical wrist, with the remaining first and third axis parallel (Solvable by SP5)
@@ -260,7 +237,7 @@ bool ik_test_SPHERICAL_1_3_P()
 		ee_poses.push_back(spherical_1_3.fwdkin({rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle()}));
 	}
 
-	return evaluate_test("IK spherical wrist - Axis 1||3", spherical_1_3, ee_poses);
+	return evaluate_test<IKS::General_Robot>("IK spherical wrist - Axis 1||3", spherical_1_3, ee_poses);
 }
 
 // spherical wrist, with the remaining first and second axis parallel
@@ -280,7 +257,7 @@ bool ik_test_SPHERICAL_1_2_P()
 		ee_poses.push_back(Irb6640_mod.fwdkin({rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle()}));
 	}
 
-	return evaluate_test("IK spherical wrist - Axis 1||2", Irb6640_mod, ee_poses);
+	return evaluate_test<IKS::General_Robot>("IK spherical wrist - Axis 1||2", Irb6640_mod, ee_poses);
 }
 
 // spherical wrist, with the remaining second and third axis parallel
@@ -300,7 +277,7 @@ bool ik_test_SPHERICAL_2_3_P_REDUNDANT()
 		ee_poses.push_back(bot_1.fwdkin({rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle()}));
 	}
 
-	return evaluate_test("IK spherical wrist - Axis 2||3", bot_1, ee_poses);
+	return evaluate_test<IKS::General_Robot>("IK spherical wrist - Axis 2||3", bot_1, ee_poses);
 }
 
 // spherical wrist, with the remaining second and third axis parallel
@@ -332,7 +309,7 @@ bool ik_test_SPHERICAL_2_3_P()
 		ee_poses.push_back(Irb6640.fwdkin({rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle()}));
 	}
 
-	return evaluate_test("IK spherical wrist - Axis 2||3", Irb6640, ee_poses);
+	return evaluate_test<IKS::General_Robot>("IK spherical wrist - Axis 2||3", Irb6640, ee_poses);
 }
 
 bool ik_test_SPHERICAL()
@@ -350,109 +327,5 @@ bool ik_test_SPHERICAL()
 		ee_poses.push_back(Spherical_Bot.fwdkin({rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle(), rand_angle()}));
 	}
 
-	return evaluate_test("IK spherical wrist", Spherical_Bot, ee_poses);
-}
-
-bool evaluate_test(const std::string &name_test, const IKS::General_Robot &robot, const std::vector<IKS::Homogeneous_T> &ee_poses)
-{
-	IKS::IK_Solution solution;
-	const auto start = std::chrono::steady_clock::now();
-
-	// Do once for timing test
-	for (const auto &pose : ee_poses)
-	{
-		solution = robot.calculate_IK(pose);
-	}
-
-	const auto end = std::chrono::steady_clock::now();
-	unsigned long time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
-
-	// Do once for precision test
-	double sum_error = 0;
-	double max_error = 0;
-	unsigned total_non_LS_solutions = 0;
-	unsigned total_LS_solutions = 0;
-	unsigned total_no_solution = 0;
-	for (const auto &pose : ee_poses)
-	{
-		solution = robot.calculate_IK(pose);
-		unsigned non_LS_solutions = 0;
-
-		for (unsigned i = 0; i < solution.Q.size(); i++)
-		{
-			for(const auto& q : solution.Q.at(i))
-			{
-				if(std::isnan(q))
-				{
-					throw std::runtime_error("Solution contained NAN!");
-				}
-			}
-
-			// Only account for non-LS-solutions in this test
-			if (!solution.is_LS_vec.at(i))
-			{
-				IKS::Homogeneous_T result = robot.fwdkin(solution.Q.at(i));
-
-				double error = (result - pose).norm();
-				max_error = max_error < error ? error : max_error;
-				sum_error += error;
-				non_LS_solutions++;
-				total_non_LS_solutions++;
-			}
-		}
-
-		if (non_LS_solutions == 0)
-		{
-			std::vector<double> smallest_error_LS;
-			double smallest_error = std::numeric_limits<double>::infinity();
-			for (unsigned i = 0; i < solution.Q.size(); i++)
-			{
-				IKS::Homogeneous_T result = robot.fwdkin(solution.Q.at(i));
-
-				double error = (result - pose).norm();
-				// Only account for non-LS-solutions in this test
-				if (error < smallest_error)
-				{
-					smallest_error = error;
-					smallest_error_LS = solution.Q.at(i);
-				}
-			}
-			if(solution.Q.size() > 0)
-			{
-				max_error = max_error < smallest_error ? smallest_error : max_error;
-				
-				sum_error += smallest_error;
-				total_LS_solutions++;
-			}
-			else
-			{
-				total_no_solution++;
-			}
-		}
-	}
-
-	double avg_error = std::numeric_limits<double>::infinity();
-	
-	if(total_LS_solutions+total_non_LS_solutions > 0)
-	{
-		avg_error = sum_error / (total_non_LS_solutions+total_LS_solutions);
-	}
-	const bool is_passed{std::fabs(max_error) < ERROR_PASS_EPSILON &&
-						 std::fabs(avg_error) < ERROR_PASS_EPSILON};
-	std::cout << "\n===== Test [" << name_test << "]: ";
-	if (is_passed)
-	{
-		std::cout << "[PASS] =====" << std::endl;
-	}
-	else
-	{
-		std::cout << "[FAIL] =====" << std::endl;
-	}
-	std::cout << "\tAverage error: " << avg_error << std::endl;
-	std::cout << "\tMaximum error: " << max_error << std::endl;
-	std::cout << "\tNum LS solutions:  " << total_LS_solutions << std::endl;
-	std::cout << "\tNum NO solutions:  " << total_no_solution << std::endl;
-	std::cout << "===== Average solution time (nanoseconds): " << time / BATCH_SIZE << " =====" << std::endl;
-
-	return is_passed;
+	return evaluate_test<IKS::General_Robot>("IK spherical wrist", Spherical_Bot, ee_poses);
 }
