@@ -20,9 +20,10 @@ double rand_angle()
 template<class T>
 bool evaluate_test(const std::string &name_test, const T &robot, const std::vector<IKS::Homogeneous_T> &ee_poses)
 {
+	std::cout<<"Kinematic Family: "<<robot.get_kinematic_family()<<std::endl;
 	IKS::IK_Solution solution;
 	const auto start = std::chrono::steady_clock::now();
-
+	
 	// Do once for timing test
 	for (const auto &pose : ee_poses)
 	{

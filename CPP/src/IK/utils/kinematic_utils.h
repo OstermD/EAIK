@@ -1,4 +1,5 @@
 #include <eigen3/Eigen/Dense>
+#include "IKS.h"
 
 namespace IKS
 {
@@ -9,5 +10,6 @@ namespace IKS
     void reverse_vector_second_dimension(std::vector<std::vector<double>> &vector);
 
     std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::Matrix3d> dh_to_H_P(const Eigen::VectorXd& dh_alpha, const Eigen::VectorXd& dh_a, const Eigen::VectorXd& dh_d);
+    void inplace_enforce_solution_consistency(IK_Solution inconsistent_solution, const General_Robot& robot, const Homogeneous_T& desiredT, const double& error_threshold=1e-6);
 } // namespace IKS
 
