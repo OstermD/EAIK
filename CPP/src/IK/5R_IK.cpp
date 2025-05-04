@@ -614,25 +614,32 @@ namespace IKS
                 const double &q5 = sp1_5.get_theta();
                 const Eigen::Matrix3d r_45 = Eigen::AngleAxisd(q5, this->H.col(4).normalized()).toRotationMatrix();
 
-                SP1 sp1_4(r_45 * r_05.transpose() * r_01 * this->H.col(1), this->H.col(1), this->H.col(3));
-                sp1_4.solve();
+                const Eigen::Vector3d hn = create_normal_vector(this->H.col(1));
+                SP1 sp1_14(hn, r_01.transpose()*r_05*r_45.transpose()*hn, this->H.col(1));
+                sp1_14.solve();
 
-                const double &q4 = sp1_4.get_theta();
-                const Eigen::Matrix3d r_34 = Eigen::AngleAxisd(q4, this->H.col(3).normalized()).toRotationMatrix();
+                const double &q14 = sp1_14.get_theta();
+                const Eigen::Matrix3d r_14 = Eigen::AngleAxisd(q14, this->H.col(1).normalized()).toRotationMatrix();
+                const Eigen::Matrix3d r_40 = (r_01*r_14).transpose();
 
-                SP1 sp1_3(r_34 * r_45 * r_05.transpose() * r_01 * this->H.col(1), this->H.col(1), this->H.col(2));
-                sp1_3.solve();
+                const Eigen::Vector3d placeholder = r_40*p_15 - r_14.transpose()*this->P.col(1) - this->P.col(4);
+                SP3 sp3_3(this->P.col(2), -this->P.col(3), -this->H.col(2), placeholder.norm());
+                sp3_3.solve();
 
-                const double &q3 = sp1_3.get_theta();
-                const Eigen::Matrix3d r_23 = Eigen::AngleAxisd(q3, this->H.col(2).normalized()).toRotationMatrix();
+                for(const auto& q3 : sp3_3.get_theta())
+                {
+                    const Eigen::Matrix3d r_32 = Eigen::AngleAxisd(q3, -this->H.col(2).normalized()).toRotationMatrix();
+                    SP1 sp1_4(r_32*this->P.col(2) + this->P.col(3), placeholder, -this->H.col(3));
+                    sp1_4.solve();
+                    const double &q4 = sp1_4.get_theta();
+                    const Eigen::Matrix3d r_43 = Eigen::AngleAxisd(q4, -this->H.col(3).normalized()).toRotationMatrix();
 
-                SP1 sp1_2(r_23 * r_34 * r_45 * r_05.transpose() * r_01 * this->H.col(1), this->H.col(2), this->H.col(1));
-                sp1_2.solve();
+                    SP1 sp1_2(hn, r_14*r_43*r_32*hn, this->H.col(1));
+                    sp1_2.solve();
 
-                const double &q2 = sp1_2.get_theta();
-
-                solution.Q.push_back({q1, q2, q3, q4, q5});
-                solution.is_LS_vec.push_back(sp4.solution_is_ls() || sp1_5.solution_is_ls() || sp1_3.solution_is_ls() || sp1_4.solution_is_ls() || sp1_2.solution_is_ls());
+                    solution.Q.push_back({q1, sp1_2.get_theta(), q3, q4, q5});
+                    solution.is_LS_vec.push_back(sp4.solution_is_ls() || sp1_5.solution_is_ls() || sp3_3.solution_is_ls() || sp1_4.solution_is_ls() || sp1_2.solution_is_ls() || sp1_14.solution_is_ls());
+                }
             }
 
             break;
