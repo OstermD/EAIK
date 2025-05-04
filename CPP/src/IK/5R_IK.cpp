@@ -13,6 +13,7 @@ namespace IKS
     General_5R::General_5R(const Eigen::Matrix<double, 3, 5> &H, const Eigen::Matrix<double, 3, 6> &P)
         : General_Robot(H, P), H(H), P(P)
     {
+        kinematicClass = determine_Kinematic_Class();
     }
 
     General_5R::KinematicClass General_5R::determine_Kinematic_Class()
@@ -225,7 +226,7 @@ namespace IKS
                 const Eigen::Matrix3d r_23 = Eigen::AngleAxisd(q3, this->H.col(2).normalized()).toRotationMatrix();
 
                 SP2 sp2_1_2(p_15, this->P.col(2) + r_23 * this->P.col(3), -this->H.col(0), this->H.col(1));
-
+                sp2_1_2.solve();
                 const std::vector<double> &theta_1 = sp2_1_2.get_theta_1();
                 const std::vector<double> &theta_2 = sp2_1_2.get_theta_2();
 
@@ -494,6 +495,7 @@ namespace IKS
                     {
                         const Eigen::Matrix3d r_23 = Eigen::AngleAxisd(q3, this->H.col(2).normalized()).toRotationMatrix();
                         SP1 sp1_2(this->P.col(2) + r_23 * r_34 * this->P.col(4), r_01.transpose() * p_15 - this->P.col(1), this->H.col(1));
+                        sp1_2.solve();
                         sp1_2.get_theta();
 
                         const double &q2 = sp1_2.get_theta();
@@ -635,5 +637,37 @@ namespace IKS
         }
 
         return solution;
+    }
+
+    std::string General_5R::get_kinematic_family() const
+    {
+        switch (this->kinematicClass)
+        {
+        case KinematicClass::FOURTH_FITH_INTERSECTING:
+            return "5R-FOURTH_FITH_INTERSECTING";
+        case KinematicClass::FOURTH_FITH_INTERSECTING_SECOND_THIRD_INTERSECTING:
+            return "5R-FOURTH_FITH_INTERSECTING";
+        case KinematicClass::FOURTH_FITH_INTERSECTING_FIRST_SECOND_INTERSECTING:
+            return "5R-FOURTH_FITH_INTERSECTING_FIRST_SECOND_INTERSECTING";
+        case KinematicClass::FOURTH_FITH_INTERSECTING_FIRST_SECOND_PARALLEL:
+            return "5R-FOURTH_FITH_INTERSECTING_FIRST_SECOND_PARALLEL";
+        case KinematicClass::FOURTH_FITH_INTERSECTING_SECOND_THIRD_PARALLEL:
+            return "5R-FOURTH_FITH_INTERSECTING_SECOND_THIRD_PARALLEL";
+        case KinematicClass::SPHERICAL_WRIST:
+            return "5R-SPHERICAL_WRIST";
+        case KinematicClass::SPHERICAL_WRIST_FIRST_SECOND_INTERSECTING:
+            return "5R-SPHERICAL_WRIST_FIRST_SECOND_INTERSECTING";
+        case KinematicClass::THIRD_FOURTH_INTERSECTING_SECOND_THIRD_PARALLEL:
+            return "5R-THIRD_FOURTH_INTERSECTING_SECOND_THIRD_PARALLEL";
+        case KinematicClass::THIRD_FOURTH_INTERSECTING_SECOND_THIRD_PARALLEL_FOURTH_FITH_PARALLEL:
+            return "5R-THIRD_FOURTH_INTERSECTING_SECOND_THIRD_PARALLEL_FOURTH_FITH_PARALLEL";
+        case KinematicClass::FIRST_SECOND_THIRD_PARALLEL:
+            return "5R-FIRST_SECOND_THIRD_PARALLEL";
+        case KinematicClass::FIRST_SECOND_THIRD_PARALLEL_FOURTH_FITH_PARALLEL:
+            return "5R-FIRST_SECOND_THIRD_PARALLEL_FOURTH_FITH_PARALLEL";
+        case KinematicClass::SECOND_THIRD_FOURTH_PARALLEL:
+            return "5R-SECOND_THIRD_FOURTH_PARALLEL";
+        }
+        return "5R-Unknown Kinematic Class";
     }
 };

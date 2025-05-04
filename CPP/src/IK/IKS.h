@@ -121,7 +121,7 @@ namespace IKS
             FIRST_TWO_LAST_TWO_INTERSECTING = 5,
             SPHERICAL_WRIST = 6,
             REVERSED = 7,
-            UNKNOWN
+            UNKNOWN = 8
         };
 
         Eigen::Matrix<double, 3, 4> H;
@@ -142,7 +142,7 @@ namespace IKS
         
         bool has_known_decomposition() const override { return true; }
 
-        std::string get_kinematic_family() const override { return std::string("5R"); }
+        std::string get_kinematic_family() const override;
 
     private:
         enum KinematicClass
@@ -159,8 +159,8 @@ namespace IKS
             FIRST_SECOND_THIRD_PARALLEL = 9,
             FIRST_SECOND_THIRD_PARALLEL_FOURTH_FITH_PARALLEL = 10,
             SECOND_THIRD_FOURTH_PARALLEL = 11,
-            REVERSED = 7,
-            UNKNOWN
+            REVERSED = 12,
+            UNKNOWN = 13
         };
 
         Eigen::Matrix<double, 3, 5> H;
@@ -195,7 +195,7 @@ namespace IKS
             SPHERICAL_SECOND_TWO_INTERSECTING = 5,
             SPHERICAL_NO_PARALLEL_NO_INTERSECTING = 6,
             REVERSED = 7,
-            UNKNOWN
+            UNKNOWN = 8
         };
 
         KinematicClass determine_Kinematic_Class();
