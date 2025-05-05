@@ -79,6 +79,15 @@ namespace IKS
             if (this->H.col(1).cross(this->H.col(2)).norm() > ZERO_THRESH)
             {
                 // h2 =/= h3 
+                if (this->H.col(2).cross(this->H.col(3)).norm() < ZERO_THRESH)
+                {
+                    // h3 == h4
+                    const auto&[H_reversed, P_reversed] = reverse_kinematic_chain(this->H, this->P);
+                    const Eigen::MatrixXd P_reversed_remodeled = EAIK::remodel_kinematics(H_reversed, P_reversed, ZERO_THRESH, ZERO_THRESH);
+    
+                    this->reversed_Robot_ptr = std::make_unique<General_4R>(H_reversed, P_reversed_remodeled);
+                    return KinematicClass::REVERSED;
+                }
                 return KinematicClass::NONE_PARALLEL_NONE_INTERSECTING;
             }
             // h2 == h3 
@@ -330,11 +339,27 @@ namespace IKS
                 }
                 break;
             };
+            case KinematicClass::REVERSED:
+            {
+                if(reversed_Robot_ptr)
+                {
+                    // Use reversed kinematic chain
+                    solution = this->reversed_Robot_ptr->calculate_IK(inverse_homogeneous_T(ee_position_orientation));
+                    reverse_vector_second_dimension(solution.Q);
+                }
+                else
+                {
+                    throw std::runtime_error("Reversed kinematic chain was not initialized! Please open an issue on our GitHub repository.");
+                }
+                
+                break;
+            };
+
             default:
                 std::cerr<< "The choosen manipulator has no known subproblem decomposition! The resulting solutions will be empty."<<std::endl;
         }
         
-        return solution;
+        return enforce_solution_consistency(solution, ee_position_orientation);
     }
 
 
@@ -356,6 +381,8 @@ namespace IKS
             return std::string("4R-FIRST_TWO_LAST_TWO_INTERSECTING");
         case KinematicClass::SPHERICAL_WRIST:
             return std::string("4R-SPHERICAL_WRIST");
+        case KinematicClass::REVERSED:
+            return reversed_Robot_ptr ? reversed_Robot_ptr->get_kinematic_family() : "4R-Unknown Kinematic Class";
         default:
             return std::string("4R-Unknown Kinematic Class");
         }

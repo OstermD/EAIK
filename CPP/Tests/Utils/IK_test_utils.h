@@ -6,7 +6,7 @@
 #include "EAIK.h"
 
 #define ERROR_PASS_EPSILON 1e-5
-#define BATCH_SIZE 100
+#define BATCH_SIZE 1000
 
 const Eigen::Vector3d zv(0, 0, 0);
 const Eigen::Vector3d ex(1, 0, 0);
