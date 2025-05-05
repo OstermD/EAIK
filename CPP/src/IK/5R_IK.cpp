@@ -664,7 +664,7 @@ namespace IKS
             std::cerr << "The choosen manipulator has no known subproblem decomposition! The resulting solutions will be empty." << std::endl;
         }
 
-        return solution;
+        return enforce_solution_consistency(solution, ee_position_orientation);
     }
 
     std::string General_5R::get_kinematic_family() const
@@ -695,6 +695,8 @@ namespace IKS
             return "5R-FIRST_SECOND_THIRD_PARALLEL_FOURTH_FITH_PARALLEL";
         case KinematicClass::SECOND_THIRD_FOURTH_PARALLEL:
             return "5R-SECOND_THIRD_FOURTH_PARALLEL";
+        case KinematicClass::REVERSED:
+            return reversed_Robot_ptr ? reversed_Robot_ptr->get_kinematic_family() : "5R-Unknown Kinematic Class";
         }
         return "5R-Unknown Kinematic Class";
     }

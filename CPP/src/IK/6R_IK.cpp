@@ -59,6 +59,25 @@ namespace IKS
         return false;
     }
 
+    IK_Solution General_Robot::enforce_solution_consistency(IK_Solution inconsistent_solution, const Homogeneous_T& desiredT, const double& error_threshold) const
+    {
+        for(unsigned i = 0; i < inconsistent_solution.Q.size(); ++i)
+        {
+            if(!inconsistent_solution.is_LS_vec.at(i))
+            {
+                IKS::Homogeneous_T result = fwdkin(inconsistent_solution.Q.at(i));
+				double error = (result - desiredT).norm();
+
+                if(error > error_threshold)
+                {
+                    inconsistent_solution.is_LS_vec.at(i) = true;
+                }
+            }
+        }
+
+        return inconsistent_solution;
+    }
+
     General_6R::General_6R(const Eigen::Matrix<double, 3, 6> &H, const Eigen::Matrix<double, 3, 7> &P)
         : General_Robot(H,P), H(H), P(P)
     {
@@ -83,6 +102,8 @@ namespace IKS
             return std::string("6R-SPHERICAL_SECOND_TWO_INTERSECTING");
         case KinematicClass::SPHERICAL_NO_PARALLEL_NO_INTERSECTING:
             return std::string("6R-SPHERICAL_NO_PARALLEL_NO_INTERSECTING");
+        case KinematicClass::REVERSED:
+            return reversed_Robot_ptr ? reversed_Robot_ptr->get_kinematic_family() : "6R-Unknown Kinematic Class";
         default:
             return std::string("6R-Unknown Kinematic Class");
         }

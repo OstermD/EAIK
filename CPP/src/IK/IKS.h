@@ -40,6 +40,8 @@ namespace IKS
 
         virtual std::string get_kinematic_family() const { return std::string("Unknown"); }
 
+    protected:
+        IKS::IK_Solution enforce_solution_consistency(IK_Solution inconsistent_solution, const Homogeneous_T& desiredT, const double& error_threshold=1e-6) const;
     private:
         Eigen::MatrixXd H;
         Eigen::MatrixXd P;

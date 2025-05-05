@@ -61,22 +61,4 @@ namespace IKS
             std::reverse(inner_v.begin(), inner_v.end());
         }
     }
-
-    void inplace_enforce_solution_consistency(IK_Solution inconsistent_solution, const General_Robot& robot, const Homogeneous_T& desiredT, const double& error_threshold)
-    {
-        for(unsigned i = 0; i < inconsistent_solution.Q.size(); ++i)
-        {
-            if(!inconsistent_solution.is_LS_vec.at(i))
-            {
-                IKS::Homogeneous_T result = robot.fwdkin(inconsistent_solution.Q.at(i));
-				double error = (result - desiredT).norm();
-
-                if(error > error_threshold)
-                {
-                    inconsistent_solution.is_LS_vec.at(i) = true;
-                }
-            }
-        }
-    }
-
 } // namespace IKS

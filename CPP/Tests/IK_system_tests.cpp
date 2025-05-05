@@ -5,9 +5,12 @@
 
 int main(int argc, char *argv[])
 {
-    bool allPass = run_5R_Tests();
-    //allPass &= run_3R_Tests();
-    //allPass &= run_5R_Tests();
+	std::cout<< std::endl<<"====================== 6R: ======================"<<std::endl;
+    bool allPass = run_6R_Tests();
+	std::cout<< std::endl<<"====================== 3R: ======================"<<std::endl;
+    allPass &= run_3R_Tests();
+	std::cout<< std::endl<<"====================== 5R: ======================"<<std::endl;
+    allPass &= run_5R_Tests();
 
 	std::cout<< std::endl<<"====================== RESULT: ======================"<<std::endl;
 
