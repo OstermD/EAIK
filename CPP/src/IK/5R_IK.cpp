@@ -120,6 +120,14 @@ namespace IKS
             }
             return KinematicClass::THIRD_FOURTH_INTERSECTING_SECOND_THIRD_PARALLEL;
         }
+        else if (EAIK::do_axes_intersect(this->H.col(1), this->H.col(2), this->P.col(2), ZERO_THRESH, ZERO_THRESH) && this->H.col(2).cross(this->H.col(3)).norm() < ZERO_THRESH)
+        {
+            const auto&[H_reversed, P_reversed] = reverse_kinematic_chain(this->H, this->P);
+            const Eigen::MatrixXd P_reversed_remodeled = EAIK::remodel_kinematics(H_reversed, P_reversed, ZERO_THRESH, ZERO_THRESH);
+
+            this->reversed_Robot_ptr = std::make_unique<General_5R>(H_reversed, P_reversed_remodeled);
+            return KinematicClass::REVERSED;
+        }
 
         return KinematicClass::UNKNOWN;
     }
@@ -434,7 +442,7 @@ namespace IKS
         {
             SP6 sp6(this->H.col(1), this->H.col(1), this->H.col(1), this->H.col(1),
                     -this->H.col(0), this->H.col(3), -this->H.col(0), this->H.col(3),
-                    p_15, -this->P.col(4), r_05 * this->H.col(5), -this->H.col(5),
+                    p_15, -this->P.col(4), r_05 * this->H.col(4), -this->H.col(4),
                     this->H.col(1).transpose() * (this->P.col(1) + this->P.col(2)), 0);
             sp6.solve();
 
@@ -456,7 +464,7 @@ namespace IKS
                 {
                     const Eigen::Matrix3d r_23 = Eigen::AngleAxisd(q3, this->H.col(2).normalized()).toRotationMatrix();
 
-                    SP1 sp1_2(this->P.col(2) + r_23 * r_34 * this->P.col(4), r_01.transpose() * p_15 + this->P.col(1), this->H.col(1));
+                    SP1 sp1_2(this->P.col(2) + r_23 * r_34 * this->P.col(4), r_01.transpose() * p_15 - this->P.col(1), this->H.col(1));
                     sp1_2.solve();
                     const double &q2 = sp1_2.get_theta();
 
@@ -502,7 +510,7 @@ namespace IKS
                         const Eigen::Matrix3d r_12 = Eigen::AngleAxisd(q2, this->H.col(1).normalized()).toRotationMatrix();
 
                         const Eigen::Vector3d hn = create_normal_vector(r_05 * this->H.col(4));
-                        SP1 sp1_5(r_05 * hn, r_34.transpose() * r_23.transpose() * r_12.transpose() * r_01.transpose() * hn, this->H.col(4));
+                        SP1 sp1_5(r_05.transpose() * hn, r_34.transpose() * r_23.transpose() * r_12.transpose() * r_01.transpose() * hn, this->H.col(4));
                         sp1_5.solve();
 
                         solution.Q.push_back({q1, q2, q3, q4, sp1_5.get_theta()});
