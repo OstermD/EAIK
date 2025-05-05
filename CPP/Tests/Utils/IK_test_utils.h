@@ -17,5 +17,8 @@ double rand_angle();
 
 template<class T>
 bool evaluate_test(const std::string &name_test, const T &robot, const std::vector<IKS::Homogeneous_T> &ee_poses);
-
+template<class T>
+bool evaluate_test_position(const std::string &name_test, const T &robot, const std::vector<Eigen::Vector3d> &ee_positions);
+template<class T>
+bool evaluate_test_orientation(const std::string &name_test, const T &robot, const std::vector<Eigen::Matrix3d> &ee_orientations);
 #endif

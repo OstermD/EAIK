@@ -34,7 +34,7 @@ namespace EAIK
         Eigen::MatrixXd get_original_P() const;
 
         std::string get_kinematic_family() const;
-
+        
     private:
         // Init function to allow nice constructor overloading
         void init(const Eigen::MatrixXd &H, const Eigen::MatrixXd &P, const std::vector<std::pair<int, double>>& fixed_axes={}, bool is_double_precision=true);

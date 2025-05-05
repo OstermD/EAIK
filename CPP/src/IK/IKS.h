@@ -42,7 +42,10 @@ namespace IKS
 
     protected:
         IKS::IK_Solution enforce_solution_consistency(IK_Solution inconsistent_solution, const Homogeneous_T& desiredT, const double& error_threshold=1e-6) const;
-    private:
+        IKS::IK_Solution enforce_solution_consistency(IK_Solution inconsistent_solution, const Eigen::Vector3d& desiredPosition, const double& error_threshold=1e-6) const;
+        IKS::IK_Solution enforce_solution_consistency(IK_Solution inconsistent_solution, const Eigen::Matrix3d& desiredOrientation, const double& error_threshold=1e-6) const;
+
+        private:
         Eigen::MatrixXd H;
         Eigen::MatrixXd P;
     };

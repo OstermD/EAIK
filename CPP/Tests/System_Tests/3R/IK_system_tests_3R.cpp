@@ -84,7 +84,6 @@ bool ik_test_3R_1_2_Parallel()
 	for(unsigned i = 0; i < BATCH_SIZE; i++)
 	{
 		ee_poses.push_back(two_parallel.fwdkin(std::vector{rand_angle(), rand_angle(), rand_angle()}));
-
 	}
 
 	return evaluate_test<EAIK::Robot>("IK 3R - 1,2 Parallel", two_parallel, ee_poses);
