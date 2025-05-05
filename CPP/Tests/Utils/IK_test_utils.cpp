@@ -20,7 +20,6 @@ double rand_angle()
 template<class T>
 bool evaluate_test(const std::string &name_test, const T &robot, const std::vector<IKS::Homogeneous_T> &ee_poses)
 {
-	std::cout<<"Kinematic Family: "<<robot.get_kinematic_family()<<std::endl;
 	IKS::IK_Solution solution;
 	const auto start = std::chrono::steady_clock::now();
 	
@@ -114,10 +113,11 @@ bool evaluate_test(const std::string &name_test, const T &robot, const std::vect
 	{
 		std::cout << "[FAIL] =====" << std::endl;
 	}
-	std::cout << "\tAverage error: " << avg_error << std::endl;
-	std::cout << "\tMaximum error: " << max_error << std::endl;
-	std::cout << "\tNum LS solutions:  " << total_LS_solutions << std::endl;
-	std::cout << "\tNum NO solutions:  " << total_no_solution << std::endl;
+	std::cout << "\tDetected Kinematics: "<<robot.get_kinematic_family()<<std::endl;
+	std::cout << "\tAverage error:       " << avg_error << std::endl;
+	std::cout << "\tMaximum error:       " << max_error << std::endl;
+	std::cout << "\tNum LS solutions:    " << total_LS_solutions << std::endl;
+	std::cout << "\tNum NO solutions:    " << total_no_solution << std::endl;
 	std::cout << "===== Average solution time (nanoseconds): " << time / BATCH_SIZE << " =====" << std::endl;
 
 	return is_passed;

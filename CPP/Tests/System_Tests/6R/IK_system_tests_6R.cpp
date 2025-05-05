@@ -36,6 +36,19 @@ bool run_6R_Tests()
 	allPass &= test_eigen_IO();
 	allPass &= test_batched_IK();
 
+	std::cout<< std::endl<<"====================== RESULT: ======================"<<std::endl;
+
+	if(allPass)
+	{
+		std::cout<< "                     6R  PASSING                     "<<std::endl;
+	}
+	else
+	{
+		std::cout<< "                     6R   FAILED                     "<<std::endl;
+	}
+
+	std::cout<< "====================================================="<<std::endl;
+
 	return allPass;
 }
 

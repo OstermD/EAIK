@@ -30,6 +30,19 @@ bool run_3R_Tests()
 	allPass &= ik_test_3R_1_2_3_parallel();
 	allPass &= ik_test_3R_1_2_3_parallel_2();
 
+	std::cout<< std::endl<<"====================== RESULT: ======================"<<std::endl;
+
+	if(allPass)
+	{
+		std::cout<< "                     3R  PASSING                     "<<std::endl;
+	}
+	else
+	{
+		std::cout<< "                     3R   FAILED                     "<<std::endl;
+	}
+
+	std::cout<< "====================================================="<<std::endl;
+
 	return allPass;
 }
 
