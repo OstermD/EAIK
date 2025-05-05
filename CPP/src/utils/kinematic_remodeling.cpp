@@ -82,23 +82,23 @@ namespace EAIK
                 p0_i_plus1 += P_new.col(i);
                 if (do_axes_intersect(H.col(i), H.col(i+1), P.col(i+1), ZERO_THRESHOLD, AXIS_INTERSECT_THRESHOLD))
                 {
-                    Eigen::Vector3d intersection = calc_intersection(H.col(i), H.col(i+1), p0_i_plus1, P.col(i+1), AXIS_INTERSECT_THRESHOLD);
-
-                    P_new.col(i+1) = Eigen::Vector3d(0,0,0);
+                    Eigen::Vector3d intersection = calc_intersection(H.col(i), H.col(i+1), p0_i_plus1, P_new.col(i+1), AXIS_INTERSECT_THRESHOLD);
                 
                     unsigned j = i+2;
-                    Eigen::Vector3d p0j = p0_i_plus1+P.col(j-1)+P.col(j);
+                    Eigen::Vector3d p0_j_plus1 = p0_i_plus1+P_new.col(i+1)+P_new.col(j);
 
-                    while(j < H.cols() && is_point_on_Axis(H.col(j), p0j, intersection, AXIS_INTERSECT_THRESHOLD))
+                    P_new.col(i+1) = Eigen::Vector3d(0,0,0);
+
+                    while(j < H.cols() && is_point_on_Axis(H.col(j), p0_j_plus1, intersection, AXIS_INTERSECT_THRESHOLD))
                     {
                         P_new.col(j) = Eigen::Vector3d(0,0,0);
                         j++;
-                        p0j += P.col(j);
+                        p0_j_plus1 += P.col(j);
                     }
                     P_new.col(i) = intersection - (p0_i_plus1-P_new.col(i));
-                    P_new.col(j) = p0j - intersection;
+                    P_new.col(j) = p0_j_plus1 - intersection;
                     i = j-2;
-                    p0_i_plus1 = p0j - P.col(j)-P.col(j-1);
+                    p0_i_plus1 = p0_j_plus1 - P.col(j)-P.col(j-1);
                 }
             }
         }
@@ -109,23 +109,23 @@ namespace EAIK
                 p0_i_plus1 += P_new.col(i);
                 if (do_axes_intersect(H.col(i), H.col(i+1), P.col(i+1), ZERO_THRESHOLD, AXIS_INTERSECT_THRESHOLD))
                 {
-                    Eigen::Vector3d intersection = calc_intersection(H.col(i), H.col(i+1), p0_i_plus1, P.col(i+1), AXIS_INTERSECT_THRESHOLD);
-
-                    P_new.col(i+1) = Eigen::Vector3d(0,0,0);
+                    Eigen::Vector3d intersection = calc_intersection(H.col(i), H.col(i+1), p0_i_plus1, P_new.col(i+1), AXIS_INTERSECT_THRESHOLD);
                 
                     unsigned j = i+2;
-                    Eigen::Vector3d p0j = p0_i_plus1+P.col(j-1)+P.col(j);
+                    Eigen::Vector3d p0_j_plus1 = p0_i_plus1+P_new.col(i+1)+P_new.col(j);
 
-                    while(j < H.cols() && is_point_on_Axis(H.col(j), p0j, intersection, AXIS_INTERSECT_THRESHOLD))
+                    P_new.col(i+1) = Eigen::Vector3d(0,0,0);
+
+                    while(j < H.cols() && is_point_on_Axis(H.col(j), p0_j_plus1, intersection, AXIS_INTERSECT_THRESHOLD))
                     {
                         P_new.col(j) = Eigen::Vector3d(0,0,0);
                         j++;
-                        p0j += P.col(j);
+                        p0_j_plus1 += P.col(j);
                     }
                     P_new.col(i) = intersection - (p0_i_plus1-P_new.col(i));
-                    P_new.col(j) = p0j - intersection;
+                    P_new.col(j) = p0_j_plus1 - intersection;
                     i = j-2;
-                    p0_i_plus1 = p0j - P.col(j)-P.col(j-1);
+                    p0_i_plus1 = p0_j_plus1 - P.col(j)-P.col(j-1);
                 }
             }
         }
