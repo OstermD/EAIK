@@ -19,8 +19,8 @@ target_link_libraries(Unit_Tests EAIK_Kinematics EAIK)
 target_link_libraries(Unit_Tests Eigen3::Eigen)
 
 
-set(system_test_sources /6R/IK_system_tests_6R.cpp /2R/IK_system_tests_2R.cpp /3R/IK_system_tests_3R.cpp /4R/IK_system_tests_4R.cpp /5R/IK_system_tests_5R.cpp)
-set(system_test_includes /6R /3R /2R /4R /5R)
+set(system_test_sources /6R/IK_system_tests_6R.cpp /5R/IK_system_tests_5R.cpp /4R/IK_system_tests_4R.cpp /3R/IK_system_tests_3R.cpp /2R/IK_system_tests_2R.cpp /1R/IK_system_tests_1R.cpp)
+set(system_test_includes /6R /5R /4R /3R /2R /1R)
 
 list(TRANSFORM system_test_sources
      PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/System_Tests/"

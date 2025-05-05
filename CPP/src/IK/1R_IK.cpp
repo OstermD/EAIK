@@ -19,21 +19,7 @@ namespace IKS
         IK_Solution solution = calculate_position_IK(ee_position_orientation.block<3, 1>(0, 3));
 
         // 6DOF Problem for 1R is overconstrained -> "Throw away" extraneous orientation solutions
-        for(unsigned i = 0; i < solution.Q.size(); i++)
-        {
-            if(!solution.is_LS_vec.at(i))
-            {
-				IKS::Homogeneous_T result = fwdkin(solution.Q.at(i));
-				double error = (result - ee_position_orientation).norm();
-
-                if(error > ZERO_THRESH)
-                {
-                    solution.is_LS_vec.at(i) = true;
-                }
-            }
-        }
-
-        return solution;
+        return enforce_solution_consistency(solution, ee_position_orientation);
     }
 
     IK_Solution General_1R::calculate_position_IK(const Eigen::Vector3d &ee_position) const
