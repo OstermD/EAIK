@@ -2,12 +2,14 @@
 This toolbox is based on the scientific publication "Automatic Geometric Decomposition for Analytical Inverse Kinematics"
 **Authors:** Daniel Ostermeier,
 Jonathan Külz and Matthias Althoff<br><br>
+The scientific publication related to this website was accepted to the IEEE Robotics and Automation Letters (RAL) July 17th 2025.<br>
+We will update this reference accordingly once our work has been officially published.
+Until then you may find a pre-print version of our work on the [arXiv](https://arxiv.org/abs/2409.14815).
+
 [![arxiv.org](https://img.shields.io/badge/cs.RO-%09arXiv%3A2409.14815-red)](https://arxiv.org/abs/2409.14815)<br>
 
 Please cite the above work when using this code within your own projects.
 
-A preprint of the accompanying paper to this codebase is available [here](https://arxiv.org/abs/2409.14815).
-<br>
 Please visit our [website](https://eaik.cps.cit.tum.de) for further informations.
 
 Additional derivations that were used within this toolbox are contained in [this PDF](https://github.com/OstermD/EAIK/blob/webpage/PDFs/EAIK_extended_appendix.pdf).

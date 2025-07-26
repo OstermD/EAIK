@@ -78,9 +78,9 @@ PYBIND11_MODULE(EAIK, m)
             Returns if robot has a known SP decomposition
             :return:   bool
         )pbdoc")
-        .def("H_remodeled", &EAIK::Robot::get_remodeled_H)
-        .def("P_remodeled", &EAIK::Robot::get_remodeled_P)
-        .def("H_original", &EAIK::Robot::get_original_H)
-        .def("P_original", &EAIK::Robot::get_original_P)
-        .def("kinematicFamily", &EAIK::Robot::get_kinematic_family);
+        .def("get_remodeled_H", &EAIK::Robot::get_remodeled_H)
+        .def("get_remodeled_P", &EAIK::Robot::get_remodeled_P)
+        .def("get_original_H", &EAIK::Robot::get_original_H)
+        .def("get_original_P", &EAIK::Robot::get_original_P)
+        .def("get_kinematic_family", &EAIK::Robot::get_kinematic_family);
 }
