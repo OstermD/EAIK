@@ -8,6 +8,10 @@
 
 **Authors:** Daniel Ostermeier,
 Jonathan Külz and Matthias Althoff<br><br>
+The scientific publication related to this website was accepted to the IEEE Robotics and Automation Letters (RAL) July 17th 2025.<br>
+We will update this reference accordingly once our work has been officially published.
+Until then you may find a pre-print version of our work on the arXiv:
+<br><br>
 [![arxiv.org](https://img.shields.io/badge/cs.RO-%09arXiv%3A2409.14815-red)](https://arxiv.org/abs/2409.14815)<br>
 
 
