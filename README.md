@@ -3,10 +3,10 @@ This toolbox is based on the scientific publication "Automatic Geometric Decompo
 **Authors:** Daniel Ostermeier,
 Jonathan Külz and Matthias Althoff<br><br>
 The scientific publication related to this website was accepted to the IEEE Robotics and Automation Letters (RAL) July 17th 2025.<br>
-We will update this reference accordingly once our work has been officially published.
-Until then you may find a pre-print version of our work on the [arXiv](https://arxiv.org/abs/2409.14815).
+We will update this reference accordingly, once our work has been officially published.
+Until then, you may find a version of our work [here](https://ieeexplore.ieee.org/document/11122599).
 
-[![arxiv.org](https://img.shields.io/badge/cs.RO-%09arXiv%3A2409.14815-red)](https://arxiv.org/abs/2409.14815)<br>
+[![ieeexplore.ieee.org](https://img.shields.io/badge/RA--L-%09Automatic_Geometric_Decomposition_for_Analytical_Inverse_Kinematics-blue)](https://ieeexplore.ieee.org/document/11122599)<br>
 
 Please cite the above work when using this code within your own projects.
 
