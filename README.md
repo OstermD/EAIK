@@ -8,12 +8,26 @@
 
 **Authors:** Daniel Ostermeier,
 Jonathan Külz and Matthias Althoff<br><br>
-The scientific publication related to this website was accepted to the IEEE Robotics and Automation Letters (RAL) July 17th 2025.<br>
-We will update this reference accordingly once our work has been officially published.
-Until then, you may find a version of our work [here](https://ieeexplore.ieee.org/document/11122599).
+This website is linked to the following scientific publication:<br>
+D. Ostermeier, J. Külz and M. Althoff, "Automatic Geometric Decomposition for Analytical Inverse Kinematics," in IEEE Robotics and Automation Letters, vol. 10, no. 10, pp. 9964-9971, Oct. 2025
+```
+@ARTICLE{EAIK,
+  author={Ostermeier, Daniel and Külz, Jonathan and Althoff, Matthias},
+  journal={IEEE Robotics and Automation Letters}, 
+  title={Automatic Geometric Decomposition for Analytical Inverse Kinematics}, 
+  year={2025},
+  volume={10},
+  number={10},
+  pages={9964-9971},
+  doi={10.1109/LRA.2025.3597897}
+}
+```
+
+You may find our open-access publication [here](https://ieeexplore.ieee.org/document/11122599):
 
 [![ieeexplore.ieee.org](https://img.shields.io/badge/RA--L-%09Automatic_Geometric_Decomposition_for_Analytical_Inverse_Kinematics-blue)](https://ieeexplore.ieee.org/document/11122599)<br>
 
+Please cite the above work when using this code within your own projects.
 
 Feel free to contact us if you have any questions or suggestions:
 daniel.sebastian.ostermeier@tum.de<br>
