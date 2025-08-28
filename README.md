@@ -1,16 +1,29 @@
 # EAIK: A Toolbox for Efficient Analytical Inverse Kinematics by Subproblem Decomposition
-This toolbox is based on the scientific publication "Automatic Geometric Decomposition for Analytical Inverse Kinematics"
 **Authors:** Daniel Ostermeier,
 Jonathan Külz and Matthias Althoff<br><br>
-The scientific publication related to this website was accepted to the IEEE Robotics and Automation Letters (RAL) July 17th 2025.<br>
-We will update this reference accordingly once our work has been officially published.
-Until then you may find a pre-print version of our work on the [arXiv](https://arxiv.org/abs/2409.14815).
+This toolbox is based on the following scientific publication:<br>
+D. Ostermeier, J. Külz and M. Althoff, "Automatic Geometric Decomposition for Analytical Inverse Kinematics," in IEEE Robotics and Automation Letters, vol. 10, no. 10, pp. 9964-9971, Oct. 2025
+```
+@ARTICLE{EAIK,
+  author={Ostermeier, Daniel and K{\"u}lz, Jonathan and Althoff, Matthias},
+  journal={IEEE Robotics and Automation Letters}, 
+  title={Automatic Geometric Decomposition for Analytical Inverse Kinematics}, 
+  year={2025},
+  volume={10},
+  number={10},
+  pages={9964-9971},
+  doi={10.1109/LRA.2025.3597897}
+}
+```
 
-[![arxiv.org](https://img.shields.io/badge/cs.RO-%09arXiv%3A2409.14815-red)](https://arxiv.org/abs/2409.14815)<br>
+You may find our open-access publication [here](https://ieeexplore.ieee.org/document/11122599):
+
+[![ieeexplore.ieee.org](https://img.shields.io/badge/RA--L-%09Automatic_Geometric_Decomposition_for_Analytical_Inverse_Kinematics-blue)](https://ieeexplore.ieee.org/document/11122599)<br>
+
 
 Please cite the above work when using this code within your own projects.
 
-Please visit our [website](https://eaik.cps.cit.tum.de) for further informations.
+Also, please visit our [website](https://eaik.cps.cit.tum.de) for additional informations.
 
 Additional derivations that were used within this toolbox are contained in [this PDF](https://github.com/OstermD/EAIK/blob/webpage/PDFs/EAIK_extended_appendix.pdf).
 Feel free to contact us if you have any questions or suggestions: 
