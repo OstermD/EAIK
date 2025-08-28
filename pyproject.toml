@@ -28,4 +28,4 @@ version="1.2.1"
 [project.urls]
 Homepage = "https://ostermd.github.io/EAIK/"
 GitHub = "https://github.com/OstermD/EAIK"
-Paper-Preprint = "https://arxiv.org/abs/2409.14815" 
+Paper = "https://ieeexplore.ieee.org/document/11122599" 
