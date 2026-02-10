@@ -1,7 +1,7 @@
 #include <iostream>
 #include <chrono>
 #include <string>
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 #include <vector>
 
 #include "EAIK.h"

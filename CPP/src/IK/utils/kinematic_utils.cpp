@@ -1,4 +1,4 @@
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 #include <math.h>
 #include <iostream>
 #include "kinematic_utils.h"

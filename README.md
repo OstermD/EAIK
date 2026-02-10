@@ -165,7 +165,7 @@ The example below is just a small code snipped. As the C++ code quickly becomes 
 The code there can also be used as an example on how you can use our library in a bigger project that, e.g., requires checks for least-square solutions etc.
 
 ```C
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 #include <vector>
 
 #include "EAIK.h"
