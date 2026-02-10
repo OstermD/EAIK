@@ -73,22 +73,18 @@ The following figure shows an overview of our interface and a superficial showca
 If you require a vast amount of IK problems to be computed at once, we also implement a multithreaded batched version that allows you to make full use of your processor.
 
 ## Installation
-## Dependencies and Installation
-We use [Eigen 3.4](https://eigen.tuxfamily.org/index.php?title=Main_Page) for a fast implementation of the linear algebra operations within this toolbox.
-Make sure you have your Eigen headers placed in their standard directory ('/usr/include/eigen3', '/usr/local/include/eigen3') - otherwise the following step will not work for you.
-
-We suggest using our pip-installable [PyPI package](https://pypi.org/project/EAIK/#description). Simply use the following command on your Linux machine:
-
+### Linux
+For Linux machines, we suggest using our pip-installable [PyPI package](https://pypi.org/project/EAIK/#description):
 ```
-pip install EAIK
+$ pip install EAIK
 ```
 
 <br>
 
-If you want to directly use the C++ functionality as a library and skip the Python wrapper, simply clone our [GitHub Repository](https://github.com/OstermD/EAIK) and follow the following steps.
+If you want to directly use the C++ functionality as a library and skip the Python wrapper, simply follow the next steps.
 
 
-Make sure to clone the external dependencies of this library using:
+Make sure to clone this repository with all external dependencies using:
 ```
 $ git clone --recurse-submodules git@github.com:OstermD/EAIK.git
 ```
@@ -100,6 +96,18 @@ $ cmake ..
 $ make
 ```
 
+### Windows
+Windows is currently only supported via manual installation. 
+Make sure to clone this repository with all external dependencies using:
+```
+$ git clone --recurse-submodules git@github.com:OstermD/EAIK.git
+```
+
+Then build and install EAIK within the currently active Python environment (>=3.9):
+
+```
+$ cd EAIK && pip install .
+```
 
 ## Usage Example
 We currently provide support parametrizing a robot via DH parameters, homogeneous transformations of each joint in zero-pose with respect to the basis, as well as [ROS URDF](http://wiki.ros.org/urdf) files.
