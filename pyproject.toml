@@ -15,8 +15,9 @@ classifiers = [
 ]
 keywords = ["Analytical Inverse Kinematics", "Inverse Kinematics", "Robot Kinematics"]
 dependencies = [
-    "numpy >= 1.21.0",
-    "urchin >= 0.0.27",
+    "numpy",
+    "scipy",
+    "urchin"
 ]
 requires-python = ">=3.9"
 version="1.2.1"
