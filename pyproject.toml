@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools", "wheel", "pybind11", "pybind11-stubgen"]
+requires = ["setuptools>=69", "wheel", "pybind11>=2.10", "pybind11-stubgen"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -17,9 +17,6 @@ keywords = ["Analytical Inverse Kinematics", "Inverse Kinematics", "Robot Kinema
 dependencies = [
     "numpy >= 1.21.0",
     "urchin >= 0.0.27",
-    "setuptools",
-    "pybind11 >= 2.10.0",
-    "pybind11-stubgen >= 0.13.0",
 ]
 requires-python = ">=3.9"
 version="1.2.1"
@@ -28,3 +25,11 @@ version="1.2.1"
 GitHub = "https://github.com/OstermD/EAIK"
 Homepage = "https://ostermd.github.io/EAIK/"
 Paper-Preprint = "https://arxiv.org/abs/2409.14815" 
+
+[tool.cibuildwheel]
+build = "cp39-* cp310-* cp311-* cp312-* cp313-*"
+test-command = "python -c \"import eaik; print('OK')\""
+skip = [
+    "*-musllinux_*",
+    "pp*"
+]
