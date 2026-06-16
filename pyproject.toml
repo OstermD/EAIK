@@ -21,7 +21,7 @@ dependencies = [
 ]
 
 requires-python = ">=3.9"
-version="1.2.1"
+version="1.2.2"
 
 [project.urls]
 GitHub = "https://github.com/OstermD/EAIK"
