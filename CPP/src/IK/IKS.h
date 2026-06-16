@@ -2,7 +2,7 @@
 #define SPHERICAL_IK_H
 
 #include <vector>
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 #include <memory>
 
 namespace IKS

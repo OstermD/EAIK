@@ -2,7 +2,7 @@
 #define IK_TEST_UTILS_H
 
 #include <vector>
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 #include "EAIK.h"
 
 #define ERROR_PASS_EPSILON 1e-5

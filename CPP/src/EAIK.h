@@ -1,7 +1,7 @@
 #ifndef EAIK_IMPL
 #define EAIK_IMPL
 
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 #include <memory>
 #include <tuple>
 

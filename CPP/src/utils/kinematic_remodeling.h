@@ -1,7 +1,7 @@
 #ifndef KINEMATIC_REMODELING
 #define KINEMATIC_REMODELING
 
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 #include <vector>
 #include <iostream>
 #include <math.h>

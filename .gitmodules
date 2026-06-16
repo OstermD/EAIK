@@ -1,3 +1,6 @@
 [submodule "CPP/external/ik-geo"]
 	path = CPP/external/ik-geo
-	url = git@github.com:OstermD/ik-geo.git
+	url = https://github.com/OstermD/ik-geo.git
+[submodule "CPP/external/eigen"]
+	path = CPP/external/eigen
+	url = https://gitlab.com/libeigen/eigen.git

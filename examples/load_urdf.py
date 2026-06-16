@@ -8,13 +8,13 @@ def urdf_example(path, batch_size):
     Loads spherical-wrist robot from urdf, calculates IK using subproblems and checks the solution for a certian batch size
     """
     bot = UrdfRobot(path, [])
-    print("Kinematic Family of the Robot: ", bot.kinematicFamily())
-    print("Joint axes orientations before remodeling: \n",bot.H_original())
-    print("Joint axes' reference points before remodeling: \n", bot.P_original())
-    print("Joint axes orientations after remodeling: \n", bot.H_remodeled())
-    print("Joint axes' reference points after remodeling: \n", bot.P_remodeled())
+    print("Kinematic Family of the Robot: ", bot.getKinematicFamily())
+    print("Joint axes orientations before remodeling: \n",bot.getOriginal_H())
+    print("Joint axes' reference points before remodeling: \n", bot.getOriginal_P())
+    print("Joint axes orientations after remodeling: \n", bot.getRemodeled_H())
+    print("Joint axes' reference points after remodeling: \n", bot.getRemodeled_P())
 
-    # Example desired pose
+    # Example desired poses
     test_angles = []
     for i in range(batch_size):
         rand_angles = np.array([random.random(), random.random(), random.random(), random.random(), random.random(),random.random()])
